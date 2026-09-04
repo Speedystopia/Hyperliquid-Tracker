@@ -1,0 +1,997 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>HYPE Position Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap">
+</head>
+<body>
+<style>
+:root{
+  --ground:#F2F3F7; --surf:#FFFFFF; --surf2:#EAECF3; --surf3:#E0E3ED;
+  --line:#D3D7E3; --line2:#BEC4D6;
+  --ink:#12141C; --ink2:#4A4F60; --ink3:#7C8296;
+  --accent:#3B4EDB; --accent-soft:#3B4EDB18; --accent-ink:#2C3BAE;
+  --up:#0C8A64; --up-soft:#0C8A6418; --up-ink:#096B4E;
+  --dn:#C43B48; --dn-soft:#C43B481F; --dn-ink:#9C2B36;
+  --alt:#B0740A; --alt-soft:#B0740A18;
+  --shadow:0 1px 2px rgba(18,20,28,.06),0 8px 24px -12px rgba(18,20,28,.20);
+  --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:'Archivo','Helvetica Neue',Arial,sans-serif;
+  --serif:'Newsreader',Georgia,'Times New Roman',serif;
+  --r:10px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ground:#090A10; --surf:#12141C; --surf2:#181B25; --surf3:#1F232F;
+  --line:#272C3A; --line2:#353B4D;
+  --ink:#E9EBF2; --ink2:#A2A8BC; --ink3:#737A8F;
+  --accent:#6E7DF2; --accent-soft:#6E7DF222; --accent-ink:#8E9BFF;
+  --up:#2BB98C; --up-soft:#2BB98C22; --up-ink:#46CFA3;
+  --dn:#E4666F; --dn-soft:#E4666F26; --dn-ink:#F0868D;
+  --alt:#D9A03C; --alt-soft:#D9A03C1F;
+  --shadow:0 1px 2px rgba(0,0,0,.45),0 12px 32px -16px rgba(0,0,0,.75);
+}}
+:root[data-theme="dark"]{
+  --ground:#090A10; --surf:#12141C; --surf2:#181B25; --surf3:#1F232F;
+  --line:#272C3A; --line2:#353B4D;
+  --ink:#E9EBF2; --ink2:#A2A8BC; --ink3:#737A8F;
+  --accent:#6E7DF2; --accent-soft:#6E7DF222; --accent-ink:#8E9BFF;
+  --up:#2BB98C; --up-soft:#2BB98C22; --up-ink:#46CFA3;
+  --dn:#E4666F; --dn-soft:#E4666F26; --dn-ink:#F0868D;
+  --alt:#D9A03C; --alt-soft:#D9A03C1F;
+  --shadow:0 1px 2px rgba(0,0,0,.45),0 12px 32px -16px rgba(0,0,0,.75);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1360px;margin:0 auto;padding:20px 20px 72px}
+header{padding:8px 2px 18px;border-bottom:1px solid var(--line)}
+h1{font-size:23px;font-weight:700;letter-spacing:-.022em;margin:0;text-wrap:balance}
+.sub{color:var(--ink2);font-size:12.5px;margin-top:5px;max-width:88ch}
+.card{background:var(--surf);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);min-width:0}
+.card-h{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--line)}
+.card-h h2{font-size:13px;font-weight:600;margin:0}
+.card-h .note{font:400 11px/1.35 var(--mono);color:var(--ink3);text-align:right}
+.klab{font:500 10px/1.3 var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
+
+.verdict{margin-top:18px;background:var(--surf);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr)}
+.kpi{padding:15px 18px 17px;border-right:1px solid var(--line)}
+.kpi:last-child{border-right:0}
+.kval{font:600 25px/1.1 var(--mono);letter-spacing:-.03em;margin-top:7px;font-variant-numeric:tabular-nums}
+.kval.sm{font-size:20px}
+.ksub{font:400 11px/1.4 var(--mono);color:var(--ink3);margin-top:5px;font-variant-numeric:tabular-nums}
+.up{color:var(--up-ink)} .dn{color:var(--dn-ink)}
+
+.grid{display:grid;grid-template-columns:340px minmax(0,1fr);gap:18px;margin-top:18px;align-items:start}
+.grid>*,.grid>div>*{min-width:0}
+.rail{position:sticky;top:18px;max-height:calc(100vh - 36px);overflow-y:auto}
+.sec{border-bottom:1px solid var(--line);padding:13px 16px 15px}
+.sec:last-child{border-bottom:0}
+.sec-t{font:600 10px/1 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.sec-t::after{content:"";flex:1;height:1px;background:var(--line)}
+input[type=text],textarea{width:100%;padding:7px 9px;border:1px solid var(--line2);border-radius:6px;background:var(--surf);color:var(--ink);font:400 11px/1.5 var(--mono);resize:vertical}
+input:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:8px 13px;border-radius:7px;border:1px solid var(--line2);background:var(--surf);color:var(--ink);cursor:pointer;font:500 12px/1 var(--sans)}
+.btn:hover{border-color:var(--accent);color:var(--accent-ink)}
+.btn.wide{width:100%;margin-top:9px}
+.loadmsg{font:400 11px/1.45 var(--mono);color:var(--ink3);margin-top:9px}
+.loadmsg.err{color:var(--alt)} .loadmsg.ok{color:var(--up-ink)}
+.mini{display:grid;gap:7px}
+.mrow{display:flex;justify-content:space-between;gap:10px;font:400 11.5px/1.6 var(--mono);color:var(--ink2);font-variant-numeric:tabular-nums}
+.mrow b{color:var(--ink);font-weight:500}
+
+.legs{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line)}
+.leg{background:var(--surf);padding:15px 18px 17px}
+.leg-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:11px}
+.leg-h .nm{font:600 15px/1 var(--sans)}
+.tag{font:600 9.5px/1 var(--sans);letter-spacing:.09em;text-transform:uppercase;padding:4px 7px;border-radius:5px}
+.tag.spot{background:var(--accent-soft);color:var(--accent-ink)}
+.tag.perp{background:var(--alt-soft);color:var(--alt)}
+.leg-pnl{font:600 26px/1.05 var(--mono);letter-spacing:-.03em;font-variant-numeric:tabular-nums;margin-bottom:12px}
+table.led{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+table.led td{padding:5px 0;font-size:12.5px;border-bottom:1px dotted var(--line2)}
+table.led td:first-child{color:var(--ink2)}
+table.led td:last-child{text-align:right;font-family:var(--mono)}
+table.led tr:last-child td{border-bottom:0}
+table.led tr.tot td{border-bottom:0;border-top:1.5px solid var(--line2);padding-top:8px;font-weight:600;color:var(--ink);font-size:13.5px}
+
+.chartbox{padding:12px 14px 2px;position:relative}
+svg.chart{display:block;width:100%;height:auto;overflow:visible}
+.legend{display:flex;gap:18px;flex-wrap:wrap;padding:4px 20px 14px;font-size:11.5px;color:var(--ink2)}
+.lg{display:inline-flex;align-items:center;gap:7px}
+.sw{width:18px;height:3px;border-radius:2px;display:inline-block}
+.sw.d{background:none;border-top:2px dashed var(--ink3);height:0}
+.tip{position:absolute;pointer-events:none;opacity:0;transition:opacity .1s;background:var(--surf);border:1px solid var(--line2);border-radius:8px;padding:9px 11px;box-shadow:var(--shadow);font:400 11.5px/1.65 var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap;z-index:5}
+.tip b{font-family:var(--sans);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3);font-weight:600;display:block;margin-bottom:4px}
+
+.tbl{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.tbl th{font:600 9.5px/1 var(--sans);letter-spacing:.09em;text-transform:uppercase;color:var(--ink3);text-align:right;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl th:first-child,.tbl td:first-child{text-align:left}
+.tbl td{padding:7px 12px;font:400 11.5px/1.4 var(--mono);border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+.tbl tr:last-child td{border-bottom:0}
+.tbl tbody tr:hover td{background:var(--surf2)}
+.pillx{display:inline-block;font:600 9.5px/1 var(--sans);letter-spacing:.06em;text-transform:uppercase;padding:3px 6px;border-radius:4px}
+.pillx.b{background:var(--up-soft);color:var(--up-ink)}
+.pillx.a{background:var(--dn-soft);color:var(--dn-ink)}
+.scroll{overflow-x:auto}
+
+.rec{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line)}
+.rcell{background:var(--surf);padding:12px 15px 14px}
+.rrow{display:flex;justify-content:space-between;font:400 11.5px/1.65 var(--mono);color:var(--ink2)}
+.rrow b{color:var(--ink);font-weight:500}
+.vl{margin-top:6px;font:600 10px/1 var(--sans);letter-spacing:.07em;text-transform:uppercase}
+.vl.ok{color:var(--up-ink)} .vl.bad{color:var(--dn-ink)}
+
+.prose{padding:18px 22px 24px;font-family:var(--serif);font-size:15px;line-height:1.62;color:var(--ink2)}
+.prose p{margin:0 0 12px;max-width:74ch}
+.prose h3{font-family:var(--sans);font-size:12px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--ink3);margin:20px 0 9px}
+.prose h3:first-child{margin-top:0}
+.prose code{font-family:var(--mono);font-size:12px;background:var(--surf2);padding:1px 5px;border-radius:4px;color:var(--ink)}
+.prose strong{color:var(--ink);font-weight:500}
+footer{margin-top:22px;padding-top:14px;border-top:1px solid var(--line);font-size:11.5px;color:var(--ink3);display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
+@media (max-width:1040px){
+  .grid{grid-template-columns:1fr} .rail{position:static;max-height:none}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  .kpi{border-bottom:1px solid var(--line)} .kpi:nth-child(odd){border-right:1px solid var(--line)} .kpi:nth-child(even){border-right:0}
+  .kpi:last-child{grid-column:1/-1;border-right:0;border-bottom:0}
+  .legs{grid-template-columns:1fr} .rec{grid-template-columns:1fr 1fr}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<style>
+.seg{display:inline-flex;border:1px solid var(--line2);border-radius:7px;overflow:hidden}
+.seg button{border:0;background:var(--surf);color:var(--ink2);font:500 11.5px/1 var(--sans);padding:7px 11px;cursor:pointer;border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--accent);color:#fff}
+.seg button:hover:not(.on){background:var(--surf2);color:var(--ink)}
+.pos{display:grid;gap:1px;background:var(--line)}
+.pcard{background:var(--surf);padding:15px 18px 17px}
+.ph{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.ph .nm{font:600 17px/1 var(--sans);letter-spacing:-.01em}
+.ph .sz{font:400 12px/1 var(--mono);color:var(--ink3)}
+.pg{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:14px 18px}
+.pg .klab{font-size:9.5px}
+.pv{font:500 15px/1.2 var(--mono);margin-top:5px;font-variant-numeric:tabular-nums}
+.pv.big{font-size:19px;font-weight:600;letter-spacing:-.02em}
+.bar{height:5px;border-radius:3px;background:var(--surf3);overflow:hidden;margin-top:7px}
+.bar i{display:block;height:100%;border-radius:3px}
+.warnbox{margin:0 16px 14px;padding:9px 11px;border-radius:7px;background:var(--alt-soft);
+  border:1px solid color-mix(in srgb,var(--alt) 34%,transparent);color:var(--alt);font-size:11.5px;line-height:1.45}
+@media (max-width:640px){.kpis{grid-template-columns:1fr}.kpi{border-right:0!important}}
+</style>
+<style>
+.banner{margin-top:16px;padding:12px 16px;border-radius:var(--r);font-size:13px;line-height:1.5}
+.banner b{font-weight:600}
+.banner.watch{background:var(--alt-soft);border:1px solid color-mix(in srgb,var(--alt) 38%,transparent);color:var(--alt)}
+.banner.danger{background:var(--dn-soft);border:1px solid color-mix(in srgb,var(--dn) 45%,transparent);color:var(--dn-ink)}
+.pill{display:inline-flex;align-items:center;gap:6px;font:600 10px/1 var(--sans);letter-spacing:.1em;
+  text-transform:uppercase;padding:5px 9px;border-radius:5px}
+.pill::before{content:"";width:6px;height:6px;border-radius:2px;background:currentColor}
+.pill.safe{background:var(--up-soft);color:var(--up-ink)}
+.pill.watch{background:var(--alt-soft);color:var(--alt)}
+.pill.danger{background:var(--dn-soft);color:var(--dn-ink)}
+#riskGrid,#capGrid,#heldGrid{grid-template-columns:repeat(3,1fr)}
+#riskGrid .pv,#capGrid .pv,#heldGrid .pv{font:600 21px/1.1 var(--mono);letter-spacing:-.02em;margin-top:7px;font-variant-numeric:tabular-nums}
+@media (max-width:1040px){#riskGrid,#capGrid,#heldGrid{grid-template-columns:1fr 1fr}}
+</style>
+<style>
+.capwrap{padding:22px 24px 26px}
+.capbig{font:700 46px/1 var(--mono);letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.capbig.up{color:var(--up-ink)} .capbig.dn{color:var(--dn-ink)}
+.capsub{font:400 13px/1.5 var(--sans);color:var(--ink2);margin-top:8px}
+.capsub b{color:var(--ink);font-weight:600}
+.capwhy{font-family:var(--serif);font-size:15.5px;line-height:1.6;color:var(--ink2);margin:18px 0 0;max-width:70ch}
+.capwhy b{color:var(--ink);font-weight:500}
+.capbar{position:relative;margin:46px 4px 62px}
+.capbar .cb{position:relative;height:12px;border-radius:6px;background:var(--surf3);overflow:hidden}
+.capbar .fill{position:absolute;left:0;top:0;bottom:0;background:var(--accent);border-radius:6px}
+.capbar .zone{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(45deg,transparent,transparent 5px,color-mix(in srgb,var(--dn) 26%,transparent) 5px,color-mix(in srgb,var(--dn) 26%,transparent) 6px)}
+.capbar .mk{position:absolute;top:-6px;height:24px;width:2px;background:var(--accent)}
+.capbar .mk.lim{background:var(--ink2)} .capbar .mk.bad{background:var(--dn)}
+.capbar .mk span{position:absolute;top:26px;left:0;transform:translateX(-50%);white-space:nowrap;
+  font:400 11px/1.45 var(--mono);color:var(--ink3);text-align:center}
+.capbar .mk span b{display:block;color:var(--ink);font-weight:600;font-size:12.5px}
+.capbar .mk:first-child span{transform:translateX(-10%)}
+.capbar .mk.bad span{transform:translateX(-88%)}
+.caprows{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:14px;
+  border-top:1px solid var(--line);padding-top:18px}
+.caprows p{font:400 13px/1.55 var(--sans);color:var(--ink2);margin:7px 0 0}
+@media (max-width:820px){.caprows{grid-template-columns:1fr}.capbig{font-size:36px}
+  .capbar .mk span{font-size:10px}}
+</style>
+<style>
+.hint{margin-top:10px;font:400 11px/1.55 var(--sans);color:var(--ink3)}
+.hint code{font-family:var(--mono);font-size:10.5px;background:var(--surf2);padding:1px 4px;border-radius:3px;color:var(--ink2)}
+.lnk{display:inline;border:0;background:none;padding:0;margin-top:4px;color:var(--accent-ink);
+  font:400 11px/1.55 var(--sans);cursor:pointer;text-decoration:underline}
+</style>
+<div class="wrap">
+<header>
+  <h1>Open positions</h1>
+</header>
+
+<div class="banner" id="banner" hidden></div>
+
+<div class="verdict">
+  <div class="kpis">
+    <div class="kpi"><div class="klab">Net worth</div><div class="kval" id="kNw">—</div><div class="ksub" id="kNwSub">—</div></div>
+    <div class="kpi"><div class="klab">Open P&amp;L</div><div class="kval sm" id="kOpen">—</div><div class="ksub" id="kOpenSub">—</div></div>
+    <div class="kpi"><div class="klab">P&amp;L today</div><div class="kval sm" id="kDay">—</div><div class="ksub" id="kDaySub">—</div></div>
+    <div class="kpi"><div class="klab">P&amp;L all time</div><div class="kval sm" id="kAll">—</div><div class="ksub" id="kAllSub">—</div></div>
+    <div class="kpi"><div class="klab">Funding on open positions</div><div class="kval sm" id="kFund">—</div><div class="ksub" id="kFundSub">—</div></div>
+  </div>
+</div>
+
+<div class="grid">
+  <div class="card rail">
+    <div class="card-h"><h2>Account</h2><span class="note" id="srcNote">—</span></div>
+    <div class="sec">
+      <div class="sec-t">Public address</div>
+      <input type="text" id="ADDR" spellcheck="false" placeholder="0x…" list="recent" autocomplete="off">
+      <datalist id="recent"></datalist>
+      <button class="btn wide" id="load">Read positions</button>
+      <div class="loadmsg" id="loadMsg"></div>
+      <div class="hint">Paste an address and press Enter. The last one is remembered, and the
+        eight most recent are offered in the field. Adding <code>?addr=0x…</code> to the link opens
+        that address straight away, so a bookmark per account works.
+        <button class="lnk" id="clearAddr">forget saved addresses</button></div>
+    </div>
+    <div class="sec">
+      <div class="sec-t">Balance sheet</div>
+      <div class="mini" id="bs"></div>
+    </div>
+    <div class="sec">
+      <div class="sec-t">Margin</div>
+      <div class="mini" id="mg"></div>
+    </div>
+    <div class="sec">
+      <div class="sec-t">Borrow cost</div>
+      <div class="mini" id="borrow"></div>
+    </div>
+    <div class="sec">
+      <div class="sec-t">Dust hidden</div>
+      <div class="mini" id="dust"></div>
+    </div>
+  </div>
+
+  <div style="display:grid;gap:18px;min-width:0">
+
+    <div class="card" id="perpCard">
+      <div class="card-h"><h2>Perp positions</h2><span class="note" id="perpNote">—</span></div>
+      <div class="pos" id="perps"></div>
+    </div>
+
+    <div class="card" id="riskCard" hidden>
+      <div class="card-h"><h2>Borrow interest vs liquidation</h2>
+        <span style="display:flex;align-items:center;gap:10px"><span class="note" id="riskNote">—</span><span class="pill" id="riskPill">—</span></span>
+      </div>
+      <div class="rec" id="riskGrid"></div>
+      <div style="padding:16px 18px 4px">
+        <div class="klab">Pool utilisation · the mark is the 80% break</div>
+        <div style="position:relative;margin-top:8px" id="utilBar"></div>
+      </div>
+      <div class="scroll" style="padding-top:10px"><table class="tbl" id="scen"></table></div>
+    </div>
+
+    <div class="card" id="heldCard" hidden>
+      <div class="card-h"><h2>Staked, vaults and sub-accounts</h2><span class="note" id="heldNote">—</span></div>
+      <div class="rec" id="heldGrid"></div>
+      <div class="scroll"><table class="tbl" id="heldTbl" hidden></table></div>
+      <div class="scroll"><table class="tbl" id="heldTbl2" hidden></table></div>
+    </div>
+
+    <div class="card" id="capCard" hidden>
+      <div class="card-h"><h2>How much more you can borrow</h2></div>
+      <div class="capwrap">
+        <div class="capbig" id="capBig">—</div>
+        <div class="capsub" id="capSub">—</div>
+        <p class="capwhy" id="capWhy"></p>
+        <div class="capbar" id="capBar"></div>
+        <div class="caprows" id="capRows"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><h2>Spot holdings</h2><span class="note" id="spotNote">—</span></div>
+      <div class="scroll"><table class="tbl" id="spots"></table></div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><h2>Account value in USDC</h2>
+        <span class="seg" id="segV"><button data-w="day">24 h</button><button data-w="week">7 d</button><button data-w="month">30 d</button><button data-w="allTime" class="on">All</button></span>
+      </div>
+      <div class="chartbox" id="box2">
+        <svg class="chart" id="c2" viewBox="0 0 920 260" role="img" aria-label="Account value in USDC over time"></svg>
+        <div class="tip" id="tip2"></div>
+      </div>
+      <div class="legend">
+        <span class="lg"><span class="sw" style="background:var(--accent)"></span>Whole account</span>
+        <span class="lg"><span class="sw" style="background:var(--alt)"></span>Perp equity</span>
+        <span class="note" id="vNote" style="font:400 11px/1.35 var(--mono);color:var(--ink3)"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><h2>Cumulative P&amp;L</h2>
+        <span class="seg" id="segP"><button data-w="day">24 h</button><button data-w="week">7 d</button><button data-w="month">30 d</button><button data-w="allTime" class="on">All</button></span>
+      </div>
+      <div class="chartbox" id="box1">
+        <svg class="chart" id="c1" viewBox="0 0 920 300" role="img" aria-label="Cumulative profit and loss over time"></svg>
+        <div class="tip" id="tip1"></div>
+      </div>
+      <div class="legend">
+        <span class="lg"><span class="sw" style="background:var(--accent)"></span>Whole account</span>
+        <span class="lg"><span class="sw" style="background:var(--alt)"></span>Perps only</span>
+        <span class="note" id="cNote" style="font:400 11px/1.35 var(--mono);color:var(--ink3)"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><h2>Funding paid and received</h2><span class="note" id="fdNote">—</span></div>
+      <div class="scroll"><table class="tbl" id="fund"></table></div>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  <span>Read from public data. Informational, not advice.</span>
+  <span>Hyperliquid public info API — no authentication required or used</span>
+</footer>
+</div>
+<script>
+(function(){
+"use strict";
+/* ============================================================
+   DEFAULT ADDRESS — edit the line below and save the file.
+   ============================================================ */
+const DEFAULT_ADDR = '0x90B1D9e1894Db604D8850c07DbC231681685138A';
+const ALWAYS_DEFAULT = false;   /* true = always open on DEFAULT_ADDR,
+                                   ignoring the last address you looked at */
+/* ========================================================== */
+
+const $=id=>document.getElementById(id);
+const API='https://api.hyperliquid.xyz/info', MIN=10;
+const STABLE={USDC:1,USDT0:1,USDT:1,USDH:1,USDE:1,FEUSD:1};
+/* No snapshot in this copy: the page reads the account live when it opens.
+   Leave this line in place — it declares D. */
+let D=null, isLive=false, wV='allTime', wP='allTime';
+
+/* the address to open with: ?addr= in the link, else the last one you looked at,
+   else whatever this file was built with. Nothing to edit by hand. */
+const LS_A='hl.addr', LS_R='hl.recent';
+const lsGet=(k,d)=>{try{const v=localStorage.getItem(k);return v===null?d:v;}catch(e){return d;}};
+const lsSet=(k,v)=>{try{localStorage.setItem(k,v);}catch(e){}};
+const isAddr=a=>/^0x[0-9a-fA-F]{40}$/.test((a||'').trim());
+function recents(){try{const r=JSON.parse(lsGet(LS_R,'[]'));return Array.isArray(r)?r.filter(isAddr):[];}catch(e){return [];}}
+function remember(a){if(!isAddr(a))return;lsSet(LS_A,a);
+  const r=[a].concat(recents().filter(x=>x.toLowerCase()!==a.toLowerCase())).slice(0,8);
+  lsSet(LS_R,JSON.stringify(r));fillRecents();}
+function fillRecents(){const dl=$('recent');if(!dl)return;
+  dl.innerHTML=recents().map(a=>'<option value="'+a+'"></option>').join('');}
+const startAddr=(()=>{
+  const q=new URLSearchParams(location.search).get('addr')
+        ||(location.hash.match(/0x[0-9a-fA-F]{40}/)||[])[0];
+  if(isAddr(q))return q.trim();                       /* 1. ?addr= in the link */
+  if(ALWAYS_DEFAULT&&isAddr(DEFAULT_ADDR))return DEFAULT_ADDR.trim();
+  const last=lsGet(LS_A,null);
+  if(isAddr(last))return last;                        /* 2. the last one you read */
+  if(isAddr(DEFAULT_ADDR))return DEFAULT_ADDR.trim(); /* 3. DEFAULT_ADDR above */
+  return D&&D.addr?D.addr:'';
+})();
+
+const nf=(v,d=2)=>(isFinite(v)?v:0).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const usd=(v,d=2)=>(v<0?'−':'')+'$'+nf(Math.abs(v),d);
+const sgn=(v,d=2)=>(v>=0?'+':'−')+'$'+nf(Math.abs(v),d);
+const pc=(v,d=2)=>(v>=0?'+':'−')+nf(Math.abs(v*100),d)+'%';
+const cls=v=>v>0?'up':v<0?'dn':'';
+const stamp=t=>new Date(t).toISOString().slice(0,19).replace('T',' ')+'Z';
+const hhmm=t=>new Date(t).toISOString().slice(11,16);
+const dat=t=>new Date(t).toISOString().slice(5,10);
+const dur=ms=>{const m=Math.round(ms/6e4);if(m<90)return m+' min';const h=ms/36e5;if(h<48)return nf(h,1)+' h';
+  const d=h/24;return d<60?nf(d,1)+' d':nf(d/30.44,1)+' mo';};
+
+/* ---------------- read ---------------- */
+async function post(b){const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});
+  if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}
+
+async function build(addr){
+  const [sm,mids,mac,ps,ss,pf,fills,dexList]=await Promise.all([
+    post({type:'spotMeta'}),post({type:'allMids'}),post({type:'metaAndAssetCtxs'}),
+    post({type:'clearinghouseState',user:addr}),post({type:'spotClearinghouseState',user:addr}),
+    post({type:'portfolio',user:addr}),post({type:'userFills',user:addr,aggregateByTime:false}),
+    post({type:'perpDexs'}).catch(()=>[null])]);
+  /* undocumented, but what app.hyperliquid.xyz/earn itself calls */
+  const [resv,lend,dsum,dels,vaults,subs,vals,drew]=await Promise.all([
+    post({type:'allBorrowLendReserveStates'}).catch(()=>null),
+    post({type:'borrowLendUserState',user:addr}).catch(()=>null),
+    post({type:'delegatorSummary',user:addr}).catch(()=>null),
+    post({type:'delegations',user:addr}).catch(()=>null),
+    post({type:'userVaultEquities',user:addr}).catch(()=>null),
+    post({type:'subAccounts',user:addr}).catch(()=>null),
+    post({type:'validatorSummaries'}).catch(()=>null),
+    post({type:'delegatorRewards',user:addr}).catch(()=>null)]);
+  /* every builder-deployed perp DEX is a separate margin account — scan them all */
+  const dexNames=(dexList||[null]).map(d=>d&&d.name?d.name:'').filter(n=>n!=='');
+  const dexStates=await Promise.all(dexNames.map(n=>
+    post({type:'clearinghouseState',user:addr,dex:n}).catch(()=>null)));
+  const books=[{dex:'',label:'Core',st:ps,ctx:mac}];
+  const liveDex=[];
+  dexNames.forEach((n,i)=>{const st=dexStates[i];
+    if(st&&st.marginSummary&&(+st.marginSummary.accountValue>0.01||
+      (st.assetPositions||[]).some(a=>Math.abs(+a.position.szi)>0))) liveDex.push({n,st});});
+  const dexCtx=await Promise.all(liveDex.map(d=>post({type:'metaAndAssetCtxs',dex:d.n}).catch(()=>null)));
+  liveDex.forEach((d,i)=>books.push({dex:d.n,label:d.n.toUpperCase(),st:d.st,ctx:dexCtx[i]}));
+  const tok={};(sm.tokens||[]).forEach(t=>tok[t.index]=t.name);
+  const RES={},LEND={};
+  (resv||[]).forEach(([i,v])=>{if(tok[i])RES[tok[i]]={borrowApy:+v.borrowYearlyRate,supplyApy:+v.supplyYearlyRate,
+    util:+v.utilization,supplied:+v.totalSupplied,borrowed:+v.totalBorrowed,ltv:+v.ltv,oracle:+v.oraclePx};});
+  ((lend&&lend.tokenToState)||[]).forEach(([i,v])=>{if(tok[i])LEND[tok[i]]={
+    bBasis:+v.borrow.basis,bValue:+v.borrow.value,sBasis:+v.supply.basis,sValue:+v.supply.value};});
+  const pair={},pairOf={};
+  (sm.universe||[]).forEach(p=>{const a=tok[p.tokens[0]],b=tok[p.tokens[1]];
+    if(b==='USDC'&&a&&!pair[a]){pair[a]=p.name;pairOf[p.name]=a;}});
+  const ctx={};books.forEach(bk=>{if(bk.ctx&&bk.ctx[0])bk.ctx[0].universe.forEach((a,i)=>ctx[a.name]=bk.ctx[1][i]);});
+  const mid=c=>parseFloat(mids[c]||0)||0;
+  const spotPx=t=>t==='USDC'?1:(pair[t]?mid(pair[t]):0);
+
+  /* --- replay fills --- */
+  const byCoin={};fills.forEach(f=>{(byCoin[f.coin]=byCoin[f.coin]||[]).push(f);});
+  Object.values(byCoin).forEach(a=>a.sort((x,y)=>x.time-y.time));
+  const openedAt={},spotBook={};
+  for(const c in byCoin){
+    if(c.startsWith('@')||c.includes('/')){
+      let q=0,cost=0,real=0,t0=null,fee=0;
+      for(const z of byCoin[c]){const s=+z.sz,p=+z.px,fe=+z.fee,ft=z.feeToken;
+        if(z.side==='B'){ if(q<=1e-9)t0=z.time;
+          cost+=s*p+(ft==='USDC'?fe:0); q+=s-(ft==='USDC'?0:fe); fee+=ft==='USDC'?fe:fe*p;}
+        else{const av=q>1e-12?cost/q:0, sz=Math.min(s,q);
+          real+=s*p-av*sz-(ft==='USDC'?fe:0); fee+=ft==='USDC'?fe:fe*p; cost-=av*sz; q-=s;
+          if(q<=1e-9){q=Math.max(0,q);cost=0;t0=null;}}}
+      spotBook[c]={qty:q,cost,avg:q>1e-12?cost/q:0,real,fee,t0,n:byCoin[c].length};
+    }else{
+      let pos=0,t0=null;
+      for(const z of byCoin[c]){const s=+z.sz*(z.side==='B'?1:-1);
+        if(Math.abs(pos)<1e-9&&Math.abs(s)>1e-12)t0=z.time; pos+=s; if(Math.abs(pos)<1e-9)t0=null;}
+      openedAt[c]=t0;
+    }
+  }
+
+  /* --- perps: every DEX, plus every sub-account (their state ships inside subAccounts) --- */
+  const perpOpen=[];
+  books.forEach(bk=>(bk.st.assetPositions||[]).forEach(a=>{
+    if(Math.abs(+a.position.szi)>0) perpOpen.push(Object.assign({},a.position,{_dex:bk.dex,_lab:bk.label}));}));
+  (subs||[]).forEach(x=>{const cs=x.clearinghouseState||{};
+    (cs.assetPositions||[]).forEach(a=>{ if(Math.abs(+a.position.szi)>0)
+      perpOpen.push(Object.assign({},a.position,{_dex:'',_lab:(x.name||'sub'),_sub:x.subAccountUser}));});});
+  const oldest=perpOpen.map(q=>openedAt[q.coin]).filter(Boolean);
+  const fStart=oldest.length?Math.min(...oldest):Date.now()-30*864e5;
+  const fundRaw=perpOpen.length?await post({type:'userFunding',user:addr,startTime:fStart}):[];
+  const funding=(fundRaw||[]).map(z=>({t:z.time,coin:z.delta.coin,usdc:+z.delta.usdc,
+    rate:+z.delta.fundingRate,sz:+z.delta.szi})).sort((a,b)=>b.t-a.t);
+
+  const perps=perpOpen.map(q=>{
+    const c=ctx[q.coin]||{},sz=+q.szi,mark=Math.abs(+q.positionValue/sz),t0=q._sub?null:(openedAt[q.coin]||null);
+    const fu=funding.filter(z=>z.coin===q.coin&&(!t0||z.t>=t0));
+    return {coin:q.coin,dex:q._dex,dexLab:q._lab,sub:q._sub||null,sz,side:sz<0?'short':'long',entry:+q.entryPx,mark,
+      notional:Math.abs(+q.positionValue),upnl:+q.unrealizedPnl,roe:+q.returnOnEquity,
+      lev:q.leverage?q.leverage.value:null,levType:q.leverage?q.leverage.type:'',
+      maxLev:q.maxLeverage,liq:q.liquidationPx?+q.liquidationPx:null,margin:+q.marginUsed,
+      cumF:-(+q.cumFunding.sinceOpen),cumFAll:-(+q.cumFunding.allTime),fN:fu.length,
+      fRate:c.funding?+c.funding:0,oi:c.openInterest?+c.openInterest:0,
+      oracle:c.oraclePx?+c.oraclePx:null,t0};});
+
+  /* --- spot --- */
+  const rows=[],dust=[];let dustV=0;
+  for(const b of (ss.balances||[])){
+    const t=b.coin,tot=+b.total,bor=+(b.borrowed||0),sup=+(b.supplied||0),px=spotPx(t),val=tot*px;
+    const st=!!STABLE[t], bk=st?null:(spotBook[pair[t]]||null);
+    const matched=bk&&tot>0?Math.abs(bk.qty-tot)/tot<0.02:false;
+    const rs=RES[t]||null, ln=LEND[t]||null;
+    const r={coin:t,qty:tot,px,val,sup,bor,ltv:+(b.ltv||0),stable:st,
+      borrowApy:rs?rs.borrowApy:null,supplyApy:rs?rs.supplyApy:null,util:rs?rs.util:null,
+      poolSupplied:rs?rs.supplied:null,poolBorrowed:rs?rs.borrowed:null,
+      intPaid:ln?ln.bValue-ln.bBasis:null,intEarned:ln?ln.sValue-ln.sBasis:null,
+      avg:bk?bk.avg:0,real:bk?bk.real:0,fee:bk?bk.fee:0,t0:bk?bk.t0:null,matched,
+      upnl:bk&&matched?tot*(px-bk.avg):null};
+    if(Math.abs(val)>=MIN||bor>=MIN) rows.push(r); else if(Math.abs(val)>1e-6){dust.push(r);dustV+=val;}
+  }
+  rows.sort((a,b)=>Math.abs(b.val)-Math.abs(a.val));
+
+  const P={};(pf||[]).forEach(([k,v])=>P[k]={av:(v.accountValueHistory||[]).map(z=>[z[0],+z[1]]),
+    pnl:(v.pnlHistory||[]).map(z=>[z[0],+z[1]]),vlm:+v.vlm});
+
+  /* collateral credit exactly as the exchange values it: supplied only, at the borrow oracle,
+     haircut 0.5 + 0.5*LTV, stablecoins at face. Verified against availableAfterMaintenance. */
+  let credit=0;
+  for(const b of (ss.balances||[])){const t=b.coin,sup=+(b.supplied||0);if(!(sup>0))continue;
+    const px=(RES[t]&&RES[t].oracle)||(STABLE[t]?1:spotPx(t)), lv=+(b.ltv||0);
+    credit += sup*px*(STABLE[t]?1:0.5+0.5*lv);}
+  const aam=+(((ss.tokenToAvailableAfterMaintenance||[]).find(z=>String(z[0])==='0')||[0,0])[1]);
+
+  /* staked HYPE, vault deposits and sub-accounts live outside both clearinghouses */
+  const hypePx=spotPx('HYPE')||0;
+  const vName={};(vals||[]).forEach(v=>vName[v.validator]=v.name||v.validator.slice(0,10));
+  const stk={
+    delegated:+((dsum||{}).delegated||0), undelegated:+((dsum||{}).undelegated||0),
+    pending:+((dsum||{}).totalPendingWithdrawal||0), nPending:+((dsum||{}).nPendingWithdrawals||0),
+    px:hypePx,
+    vals:(dels||[]).map(d=>({addr:d.validator,name:vName[d.validator]||d.validator.slice(0,10)+'…',
+      amt:+d.amount,lock:d.lockedUntilTimestamp})).sort((a,b)=>b.amt-a.amt),
+    r1:0,r30:0};
+  stk.total=stk.delegated+stk.undelegated+stk.pending;
+  stk.value=stk.total*hypePx;
+  if(drew&&drew.length){const now=Date.now();
+    stk.r1=drew.filter(z=>z.time>now-864e5).reduce((a,z)=>a+ +z.totalAmount,0);
+    stk.r30=drew.filter(z=>z.time>now-30*864e5).reduce((a,z)=>a+ +z.totalAmount,0);}
+  const vlt=(vaults||[]).map(v=>({addr:v.vaultAddress,eq:+v.equity,lock:v.lockedUntilTimestamp}))
+    .filter(v=>v.eq>=MIN).sort((a,b)=>b.eq-a.eq);
+  const vltTotal=vlt.reduce((a,v)=>a+v.eq,0);
+  const sub=(subs||[]).map(x=>{const cs=x.clearinghouseState||{};
+      const sv=(((x.spotState||{}).balances)||[]).reduce((a,b)=>{const px=spotPx(b.coin);return a+ +b.total*px;},0);
+      return {name:x.name||'—',addr:x.subAccountUser,
+        perp:+((cs.marginSummary||{}).accountValue||0),spot:sv,
+        n:(cs.assetPositions||[]).filter(a=>Math.abs(+a.position.szi)>0).length};})
+    .map(x=>Object.assign(x,{tot:x.perp+x.spot}))
+    .filter(x=>x.tot>=MIN).sort((a,b)=>b.tot-a.tot);
+  const subTotal=sub.reduce((a,x)=>a+x.tot,0);
+
+  const spotVal=rows.reduce((a,r)=>a+Math.max(0,r.val),0)+dust.reduce((a,r)=>a+Math.max(0,r.val),0);
+  const borrowed=(ss.balances||[]).reduce((a,b)=>a+ +(b.borrowed||0),0);
+  return {addr,t:Date.now(),perps,rows,dust,dustV,P,funding:funding.slice(0,40),
+    ms:{av:+ps.marginSummary.accountValue,ntl:+ps.marginSummary.totalNtlPos,
+        raw:+ps.marginSummary.totalRawUsd,used:+ps.marginSummary.totalMarginUsed,
+        wd:+ps.withdrawable,mm:+ps.crossMaintenanceMarginUsed},
+    dexAccts:books.map(bk=>({dex:bk.dex,label:bk.label,
+      av:+bk.st.marginSummary.accountValue,ntl:+bk.st.marginSummary.totalNtlPos,
+      used:+bk.st.marginSummary.totalMarginUsed,mm:+(bk.st.crossMaintenanceMarginUsed||0),
+      wd:+(bk.st.withdrawable||0),
+      n:(bk.st.assetPositions||[]).filter(a=>Math.abs(+a.position.szi)>0).length})),
+    dexScanned:1+dexNames.length,
+    pmRatio:+(ss.portfolioMarginRatio||0),pm:!!ss.portfolioMarginEnabled,
+    spotVal,borrowed,nFills:fills.length,
+    res:RES,health:lend?lend.health:null,hf:lend?+lend.healthFactor:null,credit,aam,
+    stk,vlt,vltTotal,sub,subTotal,
+    exAv:(P.allTime&&P.allTime.av.length)?P.allTime.av[P.allTime.av.length-1][1]:null,
+    fillsFrom:fills.length?Math.min(...fills.map(f=>f.time)):null};
+}
+
+/* ---- what interest alone can do to this account ----
+   Liquidation fires when  (20 + maintenance_margin) / liquidation_value > 0.95.
+   Debt sits in the liquidation value dollar-for-dollar, so availableAfterMaintenance
+   falls by exactly one dollar per dollar of interest capitalised. That gives an
+   interest budget, and a compounding debt turns the budget into a deadline. */
+const MBO=20, TRIG=0.95;
+function rateAt(u){return 0.05+4.75*Math.max(0,u-0.8);}
+function risk(){
+  if(!D||!(D.borrowed>0)) return null;
+  const bRows=D.rows.filter(r=>r.bor>0);
+  const wRate=bRows.reduce((a,r)=>a+r.bor*(r.borrowApy||0),0)/D.borrowed;
+  const util=bRows.length?(bRows[0].util||0):0;
+  const floor=(MBO+TRIG*D.ms.mm)/TRIG-D.ms.mm;      /* aam at which the trigger fires */
+  const budget=D.aam-floor;                          /* dollars of interest still absorbable */
+  const yrs=r=>(budget<=0||r<=0)?0:Math.log(1+budget/D.borrowed)/r;
+  /* funding the book earns per year, signed: a short is paid when the rate is positive */
+  const fund=D.perps.reduce((a,p)=>a-p.sz*p.mark*p.fRate*8760,0);
+  const cost=D.borrowed*wRate;
+  const rStar=fund>0?fund/D.borrowed:0;              /* rate at which the carry breaks even */
+  const uStar=rStar>0.05?0.8+(rStar-0.05)/4.75:(rStar>0?0:null);
+  const t=yrs(wRate);
+  let lvl='safe',why=[];
+  if(budget<=0){lvl='danger';why.push('the interest budget is already spent');}
+  else{
+    if(util>=0.80){lvl='danger';why.push('the pool is past 80% used, where the rate escalates 4.75 points per point');}
+    else if(util>=0.72){lvl='watch';why.push('the pool is close to the 80% break');}
+    if(t<0.5){lvl='danger';why.push('interest alone reaches the trigger inside six months');}
+    else if(t<3&&lvl!=='danger'){lvl='watch';why.push('interest alone reaches the trigger inside three years');}
+    if(cost>fund&&lvl==='safe'){lvl='watch';why.push('interest already costs more than the funding the book earns');}
+  }
+  return {wRate,util,floor,budget,t,fund,cost,rStar,uStar,lvl,why,
+    scen:[util,0.8,0.9,1.0].sort((a,b)=>a-b).map(u=>({u,r:rateAt(u),t:yrs(rateAt(u))}))};
+}
+
+
+/* ---- how much more debt this book can carry ----
+   Liquidation fires at (20 + MM) / LV = 0.95, so LV may fall to (20+MM)/0.95 and no further.
+   Debt sits in LV dollar-for-dollar. Borrowing and holding the cash is neutral — it is spending
+   it that costs headroom, at $1 per dollar taken out, or 17.5 cents per dollar recycled into HYPE
+   (credited at 0.5 + 0.5*LTV instead of face). Everything else is stressed against price:
+   collateral credit scales with it, the perp legs move against it, maintenance margin follows
+   the notional. */
+function capacity(){
+  if(!D) return null;
+  const sup=D.rows.filter(r=>r.sup>0);
+  const creditAt=m=>sup.reduce((a,r)=>a+r.sup*r.px*(r.stable?1:m)*(r.stable?1:0.5+0.5*r.ltv),0);
+  const lendAt=m=>sup.reduce((a,r)=>a+(r.stable?0:r.sup*r.px*m*r.ltv),0);
+  const core=D.perps.filter(p=>!p.dex);
+  const pnlAt=m=>core.reduce((a,p)=>a+p.sz*p.mark*(m-1),0);   /* a short gains as the price falls */
+  /* debt at which the liquidation trigger fires, if the cash is spent rather than held */
+  const liqAt=m=>D.borrowed+creditAt(m)+D.ms.av+pnlAt(m)-D.borrowed-(MBO+D.ms.mm*m)/TRIG;
+  const coll=sup.filter(r=>!r.stable).reduce((a,r)=>a+r.sup*r.px,0);
+  const wLtv=coll>0?lendAt(1)/coll:0.65;
+  const lend=lendAt(1), liq=liqAt(1);
+  const extra=lend-D.borrowed;
+  const rate=(D.rows.filter(r=>r.bor>0)[0]||{borrowApy:0.05}).borrowApy;
+  return {coll,wLtv,lend,liq,extra,cushion:liq-lend,cost:Math.max(0,extra)*rate,rate,
+    debt:D.borrowed,
+    half:{lend:lendAt(0.5),extra:lendAt(0.5)-D.borrowed,liq:liqAt(0.5)},
+    binds: lend<liq ? 'lender' : 'liquidation'};
+}
+
+/* ---------------- render ---------------- */
+function intCell(r){
+  if(r.bor>0) return (r.intPaid!=null? usd(-r.intPaid,6) : '—')
+    +'<div style="color:var(--ink3);font-size:10.5px">'+usd(-r.bor*(r.borrowApy||0)/365,4)+' /day</div>';
+  if(r.sup>0&&r.supplyApy>0) return (r.intEarned!=null? sgn(r.intEarned,6) : '—')
+    +'<div style="color:var(--ink3);font-size:10.5px">'+usd(r.sup*r.px*(r.supplyApy||0)/365,4)+' /day</div>';
+  return '—';
+}
+function rateCell(r){
+  if(r.bor>0) return nf((r.borrowApy||0)*100,2)+'% <span style="color:var(--ink3)">borrow</span>'
+    +'<div style="color:var(--ink3);font-size:10.5px">pool '+nf((r.util||0)*100,1)+'% used</div>';
+  if(r.sup>0&&r.supplyApy>0) return nf((r.supplyApy||0)*100,2)+'% <span style="color:var(--ink3)">supply</span>'
+    +'<div style="color:var(--ink3);font-size:10.5px">pool '+nf((r.util||0)*100,1)+'% used</div>';
+  if(r.sup>0) return '<span style="color:var(--ink3)">0.00% supply</span>'
+    +'<div style="color:var(--ink3);font-size:10.5px">no borrow demand for it</div>';
+  return '—';
+}
+
+function render(){
+  if(!D){ $('srcNote').textContent='no data yet'; return; }
+  const upnlP=D.perps.reduce((a,p)=>a+p.upnl,0);
+  const upnlS=D.rows.reduce((a,r)=>a+(r.upnl||0),0);
+  const fundT=D.perps.reduce((a,p)=>a+p.cumF,0);
+  const sideAv=(D.dexAccts||[]).filter(d=>d.dex).reduce((a,d)=>a+d.av,0);
+  const upnlMain=D.perps.filter(p=>!p.dex&&!p.sub).reduce((a,p)=>a+p.upnl,0);
+  const stkV=(D.stk&&D.stk.value)||0, vltV=D.vltTotal||0, subV=D.subTotal||0;
+  const acct=D.spotVal+upnlMain+sideAv+stkV+vltV+subV, nw=acct-D.borrowed;
+
+  $('kNw').textContent=usd(nw,0);
+  $('kNwSub').textContent=[stkV?usd(stkV,0)+' staked':null,sideAv?usd(sideAv,0)+' side DEXs':null,
+    vltV?usd(vltV,0)+' vaults':null,subV?usd(subV,0)+' sub-accounts':null,
+    D.borrowed?usd(D.borrowed,0)+' borrowed':null].filter(Boolean).join(' · ')||'spot and perps only';
+  $('kOpen').textContent=sgn(upnlP+upnlS,0); $('kOpen').className='kval sm '+cls(upnlP+upnlS);
+  $('kOpenSub').textContent='spot '+sgn(upnlS,0)+' · perp '+sgn(upnlP,0);
+  const dP=D.P.day&&D.P.day.pnl.length?D.P.day.pnl[D.P.day.pnl.length-1][1]:0;
+  const aP=D.P.allTime&&D.P.allTime.pnl.length?D.P.allTime.pnl[D.P.allTime.pnl.length-1][1]:0;
+  $('kDay').textContent=sgn(dP,0); $('kDay').className='kval sm '+cls(dP);
+  $('kDaySub').textContent=D.P.day?'volume '+usd(D.P.day.vlm,0)+' traded':'—';
+  $('kAll').textContent=sgn(aP,0); $('kAll').className='kval sm '+cls(aP);
+  $('kAllSub').textContent=D.P.allTime?'volume '+usd(D.P.allTime.vlm,0)+' traded':'—';
+  $('kFund').textContent=sgn(fundT,2); $('kFund').className='kval sm '+cls(fundT);
+  $('kFundSub').textContent=D.perps.length+' open position'+(D.perps.length===1?'':'s')+' across '
+    +new Set(D.perps.map(p=>p.dexLab)).size+' venue'+(new Set(D.perps.map(p=>p.dexLab)).size===1?'':'s');
+
+  $('srcNote').textContent=(isLive?'live · ':'snapshot · ')+stamp(D.t);
+  if(!$('ADDR').value) $('ADDR').value=D.addr;   /* never clobber what is typed or resolved */
+  /* the exchange's own portfolio series covers spot + perp P&L + staking + vaults,
+     but not the HIP-3 DEXs and not sub-accounts, so compare like for like */
+  const comp=D.spotVal+upnlMain+stkV+vltV;
+  const bsRows=[['Spot at market',usd(D.spotVal,2),0],['Perp unrealised · core',sgn(upnlMain,2),0]];
+  if(stkV) bsRows.push(['Staked',usd(stkV,2),0]);
+  if(vltV) bsRows.push(['Vault deposits',usd(vltV,2),0]);
+  bsRows.push(['Rebuilt',usd(comp,2),1],
+    ['Exchange reports',D.exAv!=null?usd(D.exAv,2)+(comp?' ('+pc((comp-D.exAv)/D.exAv)+')':''):'—',0]);
+  (D.dexAccts||[]).filter(d=>d.dex).forEach(d=>bsRows.push([d.label+' DEX',usd(d.av,2),0]));
+  if(subV) bsRows.push(['Sub-accounts',usd(subV,2),0]);
+  bsRows.push(['Total account value',usd(acct,2),1],['Borrowed',usd(-D.borrowed,2),0],
+    ['Net equity',usd(nw,2),1]);
+  $('bs').innerHTML=bsRows.map(r=>'<div class="mrow"'+(r[2]?' style="border-top:1px solid var(--line);padding-top:7px"':'')+'><span>'+r[0]+'</span><b>'+r[1]+'</b></div>').join('');
+  $('mg').innerHTML=(D.dexAccts||[]).filter(d=>d.n>0||!d.dex).map(d=>
+      '<div class="mrow" style="color:var(--ink3)"><span>'+d.label+'</span><b>'+d.n+' pos · '+usd(d.av,2)+'</b></div>'
+     +'<div class="mrow"><span>&nbsp;&nbsp;notional</span><b>'+usd(d.ntl,0)+'</b></div>'
+     +'<div class="mrow"><span>&nbsp;&nbsp;margin used</span><b>'+usd(d.used,2)+'</b></div>'
+     +'<div class="mrow"><span>&nbsp;&nbsp;maintenance</span><b>'+usd(d.mm,2)+'</b></div>').join('')
+    +'<div class="mrow" style="border-top:1px solid var(--line);padding-top:7px"><span>Portfolio margin</span><b>'
+    +(D.pm?'on · ratio '+nf(D.pmRatio,6):'off')+'</b></div>'
+    +'<div class="mrow"><span>DEXs scanned</span><b>'+(D.dexScanned||1)+'</b></div>';
+  const bRows=D.rows.filter(r=>r.bor>0);
+  const iDay=bRows.reduce((a,r)=>a+r.bor*(r.borrowApy||0)/365,0);
+  const iAcc=bRows.reduce((a,r)=>a+(r.intPaid||0),0);
+  const wAvg=D.borrowed>0?bRows.reduce((a,r)=>a+r.bor*(r.borrowApy||0),0)/D.borrowed:0;
+  const ntl=D.perps.reduce((a,p)=>a+p.notional,0);
+  $('borrow').innerHTML=[
+    ['Borrowed',usd(D.borrowed,2)],
+    ['Borrow rate',bRows.length?nf(wAvg*100,3)+'% APR':'—'],
+    ['Pool utilisation',bRows.length&&bRows[0].util!=null?nf(bRows[0].util*100,2)+'%':'—'],
+    ['Rate breaks at','80% used, +4.75 pt/pt'],
+    ['Not yet capitalised',bRows.length?usd(-iAcc,6):'—'],
+    ['Interest per day',usd(-iDay,4)],
+    ['Interest per year',usd(-iDay*365,2)],
+    ['Break-even funding',ntl?pc(iDay*365/ntl,2)+' APR':'—'],
+    ['Health factor',D.hf!=null?nf(D.hf,4)+' · '+(D.health||''):'—']
+  ].map(r=>'<div class="mrow"><span>'+r[0]+'</span><b>'+r[1]+'</b></div>').join('');
+
+  $('dust').innerHTML=(D.dust.length?D.dust.map(r=>'<div class="mrow"><span>'+r.coin+'</span><b>'+usd(r.val,4)+'</b></div>').join('')
+    :'<div class="mrow"><span>nothing below $10</span><b>—</b></div>')
+    +'<div class="mrow" style="border-top:1px solid var(--line);padding-top:7px"><span>total hidden</span><b>'+usd(D.dustV,4)+'</b></div>';
+
+  /* perps */
+  $('perpNote').textContent=D.perps.length
+    ? (()=>{const ns=D.perps.filter(p=>p.sub).length, nv=new Set(D.perps.map(p=>p.dexLab)).size;
+        return D.perps.length+' across '+nv+' account'+(nv===1?'':'s')+(ns?' · '+ns+' on sub-accounts':'')
+          +' · '+usd(D.perps.reduce((a,p)=>a+p.notional,0),0)+' of notional';})()
+    : 'none open';
+  $('perps').innerHTML=D.perps.length? D.perps.map(p=>{
+    const dist=p.liq?(p.liq-p.mark)/p.mark:null;
+    const g=[];
+    g.push(['Size',nf(Math.abs(p.sz),4)+' '+p.coin.replace(/^[a-z]+:/,''),'']);
+    g.push(['Notional',usd(p.notional,2),'']);
+    g.push(['Entry',usd(p.entry,4),'']);
+    g.push(['Mark (liquidation)',usd(p.mark,4),'']);
+    g.push(['Return on equity',pc(p.roe),cls(p.roe)]);
+    g.push(['Margin used',usd(p.margin,2),'']);
+    g.push(['Leverage',nf(p.lev,0)+'× '+p.levType+' · max '+p.maxLev+'×','']);
+    g.push(['Liquidation',p.liq?usd(p.liq,4):'none',p.liq?'':'up']);
+    if(dist!=null) g.push(['Room to liquidation',nf(Math.abs(dist)*100,1)+'% '+(dist>0?'above':'below'),
+      Math.abs(dist)<0.15?'dn':'up']);
+    g.push(['Funding rate now',pc(p.fRate*8760,1)+' APR',p.sz<0?cls(p.fRate):cls(-p.fRate)]);
+    g.push(['Opened',p.t0?stamp(p.t0).slice(0,16):'before the fill window','']);
+    g.push(['Age',p.t0?dur(D.t-p.t0):'—','']);
+    const net=p.upnl+p.cumF;
+    const head=[['Unrealised',sgn(p.upnl,2),cls(p.upnl)],
+                ['Funding since open',sgn(p.cumF,4),cls(p.cumF)],
+                ['Net so far',sgn(net,2),cls(net)]];
+    return '<div class="pcard"><div class="ph"><span class="nm">'+p.coin.replace(/^[a-z]+:/,'')+'</span>'
+      +'<span class="tag '+(p.sz<0?'perp':'spot')+'">'+p.side+'</span>'
+      +'<span class="tag" style="background:'+(p.sub?'var(--accent-soft)':'var(--surf3)')+';color:'+(p.sub?'var(--accent-ink)':'var(--ink2)')+'">'
+      +(p.sub?'sub · '+p.dexLab:p.dexLab)+'</span>'
+      +'<span class="sz">'+nf(Math.abs(p.sz),4)+' @ '+usd(p.entry,4)+'</span></div>'
+      +'<div style="display:flex;gap:30px;flex-wrap:wrap;margin-bottom:16px">'
+      +head.map(x=>'<div><div class="klab">'+x[0]+'</div><div class="pv big '+x[2]+'">'+x[1]+'</div></div>').join('')
+      +'</div>'
+      +'<div class="pg">'+g.map(x=>'<div><div class="klab">'+x[0]+'</div><div class="pv '+x[2]+'">'+x[1]+'</div></div>').join('')+'</div></div>';
+  }).join('') : '<div class="pcard" style="color:var(--ink3)">No open perp position.</div>';
+
+  /* spot */
+  const nUn=D.rows.filter(r=>r.val>=MIN&&!r.matched&&!r.stable).length;
+  $('spotNote').textContent=D.rows.length+' line'+(D.rows.length===1?'':'s')+' at or above $'+MIN+(nUn?' · '+nUn+' without a rebuildable basis':'');
+  $('spots').innerHTML='<thead><tr><th>Asset</th><th>Quantity</th><th>Price</th><th>Value</th><th>Cost basis</th><th>Unreal.</th><th>Realised</th><th>Fees</th><th>Borrowed</th><th>Interest</th><th>Rate</th><th>Since</th></tr></thead><tbody>'
+    +D.rows.map(r=>{
+      const badge=r.sup>0?'<span class="pillx b" style="margin-left:7px">supplied · ltv '+nf(r.ltv,2)+'</span>'
+        :(r.bor>0?'<span class="pillx a" style="margin-left:7px">borrowed</span>':'');
+      return '<tr><td><b style="font-family:var(--sans);font-weight:600">'+r.coin+'</b>'+badge+'</td>'
+      +'<td>'+nf(r.qty,r.qty>1000?2:6)+'</td><td>'+(r.px?usd(r.px,r.px>100?2:5):'—')+'</td>'
+      +'<td>'+usd(r.val,2)+'</td>'
+      +'<td>'+(r.stable?'<span style="color:var(--ink3)">—</span>':(r.matched&&r.avg?usd(r.avg,r.avg>100?2:5):'<span style="color:var(--ink3)">no basis in window</span>'))+'</td>'
+      +'<td class="'+cls(r.upnl||0)+'">'+(r.upnl!=null?sgn(r.upnl,2):'—')+'</td>'
+      +'<td class="'+cls(r.real)+'">'+(r.real?sgn(r.real,2):'—')+'</td>'
+      +'<td>'+(r.fee?usd(-r.fee,2):'—')+'</td>'
+      +'<td class="'+(r.bor?'dn':'')+'">'+(r.bor?usd(-r.bor,2):'—')+'</td>'
+      +'<td class="'+(r.bor?'dn':(r.intEarned>0?'up':''))+'">'+intCell(r)+'</td>'
+      +'<td>'+rateCell(r)+'</td>'
+      +'<td style="color:var(--ink3)">'+(r.t0?stamp(r.t0).slice(0,10):'—')+'</td></tr>';}).join('')+'</tbody>';
+
+  /* funding */
+  $('fdNote').textContent=D.funding.length?'last '+D.funding.length+' hourly settlements':'none yet';
+  let c=0;
+  $('fund').innerHTML=D.funding.length
+    ?'<thead><tr><th>Time (UTC)</th><th>Coin</th><th>Position</th><th>Rate</th><th>Annualised</th><th>Amount</th></tr></thead><tbody>'
+     +D.funding.map(z=>'<tr><td>'+stamp(z.t).slice(0,16)+'</td><td>'+z.coin+'</td><td>'+nf(z.sz,2)+'</td>'
+      +'<td>'+nf(z.rate*100,6)+'%</td><td>'+pc(z.rate*8760,1)+'</td>'
+      +'<td class="'+cls(z.usdc)+'">'+sgn(z.usdc,6)+'</td></tr>').join('')+'</tbody>'
+    :'<tbody><tr><td style="text-align:left;color:var(--ink3)">No funding settlement in the window.</td></tr></tbody>';
+
+  drawHeld(); drawRisk(); drawCapacity(); drawV(); drawP();
+}
+
+
+function drawRisk(){
+  const R=risk(), C=$('riskCard'), B=$('banner');
+  if(!R){C.hidden=true;B.hidden=true;return;}
+  C.hidden=false;
+  const yr=t=>t<=0?'now':(t<1?nf(t*365,0)+' days':(t<100?nf(t,1)+' years':'over a century'));
+  const lab={safe:'Interest is not a threat',watch:'Worth watching',danger:'Interest is a live risk'};
+  $('riskPill').className='pill '+R.lvl;
+  $('riskPill').textContent={safe:'safe',watch:'watch',danger:'danger'}[R.lvl];
+  $('riskNote').textContent=lab[R.lvl];
+  B.hidden=(R.lvl==='safe');
+  B.className='banner '+R.lvl;
+  const wh=R.why.join('; '); 
+  B.innerHTML='<b>'+lab[R.lvl]+'.</b> '+wh.charAt(0).toUpperCase()+wh.slice(1)+'. At '+nf(R.wRate*100,2)
+    +'% the debt reaches the liquidation trigger in <b>'+yr(R.t)+'</b> if the price does not move.';
+  const cells=[
+    ['Interest budget',usd(R.budget,0),'available-after-maintenance above the trigger'],
+    ['Time to trigger',yr(R.t),'at '+nf(R.wRate*100,2)+'%, price unchanged'],
+    ['Pool utilisation',nf(R.util*100,2)+'%','rate escalates past 80%'],
+    ['Carry, net',sgn(R.fund-R.cost,0)+' /yr','funding '+usd(R.fund,0)+' less interest '+usd(R.cost,0)],
+    ['When interest beats funding',
+      R.uStar==null?'It already does':(R.uStar>1?'Never':'At '+nf(R.uStar*100,0)+'% pool use'),
+      R.uStar==null?'the loan costs more than the funding your positions collect'
+      :(R.uStar>1?'even at the maximum 100% rate the loan would cost '+usd(D.borrowed,0)+' a year, less than the '+usd(R.fund,0)+' of funding you collect'
+      :'the pool is at '+nf(R.util*100,0)+'% now; past '+nf(R.uStar*100,0)+'% the loan costs more than funding pays')],
+    ['Health factor',D.hf!=null?nf(D.hf,3):'—','collateral × LTV ÷ debt']
+  ];
+  $('riskGrid').innerHTML=cells.map(c=>'<div class="rcell"><div class="klab">'+c[0]+'</div>'
+    +'<div class="pv big'+(c[0]==='Carry, net'?' '+cls(R.fund-R.cost):'')+'">'+c[1]+'</div>'
+    +'<div class="bsub" style="font:400 11px/1.4 var(--mono);color:var(--ink3);margin-top:5px">'+c[2]+'</div></div>').join('');
+  const w=Math.min(100,R.util*100);
+  $('utilBar').innerHTML='<div class="bar" style="height:10px"><i style="width:'+w+'%;background:'
+    +(R.util>=0.8?'var(--dn)':R.util>=0.72?'var(--alt)':'var(--up)')+'"></i></div>'
+    +'<div style="position:absolute;left:80%;top:-3px;bottom:-3px;width:2px;background:var(--ink)"></div>';
+  $('scen').innerHTML='<thead><tr><th>Pool utilisation</th><th>Borrow rate</th><th>Interest / year</th><th>Time to trigger</th></tr></thead><tbody>'
+    +R.scen.map(x=>'<tr'+(Math.abs(x.u-R.util)<1e-9?' style="background:var(--surf2)"':'')+'>'
+      +'<td>'+nf(x.u*100,1)+'%'+(Math.abs(x.u-R.util)<1e-9?' <span class="pillx b">now</span>':'')+'</td>'
+      +'<td>'+nf(x.r*100,2)+'%</td><td>'+usd(-D.borrowed*x.r,0)+'</td>'
+      +'<td>'+yr(x.t)+'</td></tr>').join('')+'</tbody>';
+}
+
+
+function drawCapacity(){
+  const C=capacity(), card=$('capCard');
+  if(!C||!(C.coll>0)){card.hidden=true;return;} card.hidden=false;
+
+  $('capBig').textContent=usd(Math.max(0,C.extra),0);
+  $('capBig').className='capbig '+(C.extra>0?'up':'dn');
+  $('capSub').innerHTML='more USDC, on top of the <b>'+usd(C.debt,0)+'</b> you already owe';
+
+  $('capWhy').innerHTML='Hyperliquid lends <b>'+nf(C.wLtv*100,0)+' cents</b> for every dollar of collateral you supply. '
+    +'Yours is worth <b>'+usd(C.coll,0)+'</b>, so the most it will ever lend is <b>'+usd(C.lend,0)+'</b>. '
+    +'You have taken <b>'+usd(C.debt,0)+'</b>. That leaves <b>'+usd(Math.max(0,C.extra),0)+'</b>.';
+
+  /* bar: 0 -> a little past liquidation */
+  const top=Math.max(C.liq,C.lend,C.debt)*1.08;
+  const at=v=>Math.max(0,Math.min(100,v/top*100));
+  $('capBar').innerHTML=
+     '<div class="cb"><i class="fill" style="width:'+at(C.debt)+'%"></i>'
+    +'<i class="zone" style="left:'+at(C.lend)+'%;width:'+(at(C.liq)-at(C.lend))+'%"></i></div>'
+    +'<div class="mk" style="left:'+at(C.debt)+'%"><span>you owe<br><b>'+usd(C.debt,0)+'</b></span></div>'
+    +'<div class="mk lim" style="left:'+at(C.lend)+'%"><span>it stops lending<br><b>'+usd(C.lend,0)+'</b></span></div>'
+    +'<div class="mk bad" style="left:'+at(C.liq)+'%"><span>liquidation<br><b>'+usd(C.liq,0)+'</b></span></div>';
+
+  const rows=[
+    ['What stops you first', C.binds==='lender'
+      ? 'The lender, not liquidation. It refuses at '+usd(C.lend,0)+' of debt; liquidation only starts at '+usd(C.liq,0)+' — a cushion of '+usd(C.cushion,0)+'.'
+      : 'Liquidation, at '+usd(C.liq,0)+' of debt, before the lender\u2019s own '+usd(C.lend,0)+' limit. Stay well under it.'],
+    ['What it would cost', 'Drawing the whole '+usd(Math.max(0,C.extra),0)+' adds '+usd(C.cost,0)+' a year of interest at today\u2019s '+nf(C.rate*100,2)+'% rate.'],
+    ['If the price halved', 'The limit follows the collateral down to '+usd(C.half.lend,0)+' in total'
+      +(C.half.extra>0?', still '+usd(C.half.extra,0)+' above what you owe today.'
+                      :' — below the '+usd(C.debt,0)+' you owe, so you could not borrow at all and would have to repay.')]
+  ];
+  $('capRows').innerHTML=rows.map(r=>'<div class="cr"><div class="klab">'+r[0]+'</div><p>'+r[1]+'</p></div>').join('');
+}
+
+
+function drawHeld(){
+  const S=D.stk||{}, card=$('heldCard');
+  const has=(S.value>=MIN)||(D.vltTotal>=MIN)||(D.subTotal>=MIN);
+  if(!has){card.hidden=true;return;} card.hidden=false;
+  $('heldNote').textContent='outside the spot and perp balances';
+  const big=[];
+  if(S.value>=MIN) big.push(['Staked HYPE',usd(S.value,0),nf(S.total,2)+' HYPE at '+usd(S.px,2)]);
+  if(S.r30>0) big.push(['Staking rewards',nf(S.r30,2)+' HYPE',usd(S.r30*S.px,0)+' over 30 days · '+nf(S.r1,3)+' HYPE yesterday']);
+  if(S.pending>0) big.push(['Unstaking',nf(S.pending,2)+' HYPE',S.nPending+' withdrawal'+(S.nPending===1?'':'s')+' in the queue · '+usd(S.pending*S.px,0)]);
+  if(D.vltTotal>=MIN) big.push(['Vault deposits',usd(D.vltTotal,0),D.vlt.length+' vault'+(D.vlt.length===1?'':'s')]);
+  if(D.subTotal>=MIN) big.push(['Sub-accounts',usd(D.subTotal,0),D.sub.length+' funded of the ones reported']);
+  $('heldGrid').innerHTML=big.map(c=>'<div class="rcell"><div class="klab">'+c[0]+'</div>'
+    +'<div class="pv big">'+c[1]+'</div>'
+    +'<div class="bsub" style="font:400 11px/1.4 var(--mono);color:var(--ink3);margin-top:5px">'+c[2]+'</div></div>').join('');
+  let t='';
+  if(S.vals&&S.vals.length){
+    t+='<thead><tr><th>Validator</th><th>Staked HYPE</th><th>Value</th><th>Share</th><th>Locked until</th></tr></thead><tbody>'
+      +S.vals.slice(0,12).map(v=>'<tr><td>'+v.name+'</td><td>'+nf(v.amt,2)+'</td><td>'+usd(v.amt*S.px,0)+'</td>'
+      +'<td>'+nf(S.delegated>0?v.amt/S.delegated*100:0,1)+'%</td>'
+      +'<td style="color:var(--ink3)">'+(v.lock?stamp(v.lock).slice(0,10):'—')+'</td></tr>').join('')
+      +(S.vals.length>12?'<tr><td colspan="5" style="color:var(--ink3);text-align:left">and '+(S.vals.length-12)+' more validators</td></tr>':'')
+      +'</tbody>';
+  }
+  $('heldTbl').innerHTML=t; $('heldTbl').hidden=!t;
+  let v='';
+  if(D.vlt.length||D.sub.length){
+    v='<thead><tr><th>Holding</th><th>Address</th><th>Value</th><th>Note</th></tr></thead><tbody>'
+      +D.vlt.map(x=>'<tr><td>Vault</td><td style="color:var(--ink3)">'+x.addr.slice(0,10)+'…'+x.addr.slice(-4)+'</td>'
+        +'<td>'+usd(x.eq,2)+'</td><td style="color:var(--ink3)">'+(x.lock?'locked to '+stamp(x.lock).slice(0,10):'—')+'</td></tr>').join('')
+      +D.sub.map(x=>'<tr><td>Sub-account · '+x.name+'</td><td style="color:var(--ink3)">'+x.addr.slice(0,10)+'…'+x.addr.slice(-4)+'</td>'
+        +'<td>'+usd(x.tot,2)+'</td><td style="color:var(--ink3)">'+usd(x.perp,0)+' perp · '+usd(x.spot,0)+' spot · '+x.n+' pos</td></tr>').join('')
+      +'</tbody>';
+  }
+  $('heldTbl2').innerHTML=v; $('heldTbl2').hidden=!v;
+}
+
+/* ---------------- charts ---------------- */
+const W=920,ML=76,MR=18,MT=16,MB=30;
+let GV=null,GP=null;
+function nice(lo,hi){const r=hi-lo||1,s=Math.pow(10,Math.floor(Math.log10(r/4)));
+  const st=[1,2,2.5,5,10].map(m=>m*s).find(v=>r/v<=6)||s*10;
+  return {lo:Math.floor(lo/st)*st,hi:Math.ceil(hi/st)*st,st};}
+function ax(x,t0,t1,H){let o='';const sp=t1-t0;
+  for(let i=0;i<=6;i++){const t=t0+sp*i/6;
+    o+='<text x="'+x(t).toFixed(1)+'" y="'+(H-MB+19)+'" text-anchor="middle" class="ax">'+(sp>2*864e5?dat(t):hhmm(t))+'</text>';}
+  return o;}
+function frame(H,N,y,x,t0,t1,zero){
+  let g='',l='';
+  for(let v=N.lo;v<=N.hi+1e-9;v+=N.st){const yy=y(v).toFixed(1),z=zero&&Math.abs(v)<1e-9;
+    g+='<line x1="'+ML+'" x2="'+(W-MR)+'" y1="'+yy+'" y2="'+yy+'" stroke="'+(z?'var(--line2)':'var(--line)')+'" stroke-width="'+(z?1.6:1)+'"/>';
+    l+='<text x="'+(ML-11)+'" y="'+(+yy+4)+'" text-anchor="end" class="ax">'+(v<0?'−':'')+'$'+nf(Math.abs(v),N.st<10?2:0)+'</text>';}
+  return g+l+ax(x,t0,t1,H)+'<line x1="'+ML+'" x2="'+(W-MR)+'" y1="'+(H-MB)+'" y2="'+(H-MB)+'" stroke="var(--line2)" stroke-width="1.5"/>';}
+const DEF='<defs><linearGradient id="ga" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--accent)" stop-opacity=".22"/><stop offset="100%" stop-color="var(--accent)" stop-opacity=".02"/></linearGradient><style>.ax{font-family:var(--mono);font-size:11px;fill:var(--ink3)}</style></defs>';
+
+function pairSeries(a,b){/* align b onto a's timestamps */
+  if(!b||!b.length)return a.map(p=>[p[0],p[1],null]);
+  let j=0;return a.map(p=>{while(j+1<b.length&&b[j+1][0]<=p[0])j++;return [p[0],p[1],b[j][1]];});}
+
+function drawV(){
+  const H=260,A=D.P[wV],B=D.P[({day:'perpDay',week:'perpWeek',month:'perpMonth',allTime:'perpAllTime'})[wV]];
+  if(!A||!A.av.length)return;
+  const S=pairSeries(A.av,B?B.av:null),t0=S[0][0],t1=S[S.length-1][0];
+  let lo=Infinity,hi=-Infinity;S.forEach(r=>{lo=Math.min(lo,r[1]);hi=Math.max(hi,r[1]);});
+  const N=nice(lo-(hi-lo||1)*.15,hi+(hi-lo||1)*.15);
+  const x=t=>ML+(t-t0)/((t1-t0)||1)*(W-ML-MR), y=v=>MT+(1-(v-N.lo)/((N.hi-N.lo)||1))*(H-MT-MB);
+  GV={S,t0,t1,x,y};
+  const p=k=>S.filter(r=>r[k]!=null).map((r,i)=>(i?'L':'M')+x(r[0]).toFixed(1)+' '+y(r[k]).toFixed(1)).join(' ');
+  const area='M'+x(t0).toFixed(1)+' '+(H-MB)+' '+S.map(r=>'L'+x(r[0]).toFixed(1)+' '+y(r[1]).toFixed(1)).join(' ')+' L'+x(t1).toFixed(1)+' '+(H-MB)+'Z';
+  $('c2').innerHTML=DEF+frame(H,N,y,x,t0,t1,false)+'<path d="'+area+'" fill="url(#ga)"/>'
+   +(B?'<path d="'+p(2)+'" fill="none" stroke="var(--alt)" stroke-width="1.6" opacity=".85"/>':'')
+   +'<path d="'+p(1)+'" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linejoin="round"/>'
+   +'<circle cx="'+x(t1).toFixed(1)+'" cy="'+y(S[S.length-1][1]).toFixed(1)+'" r="4.5" fill="var(--accent)" stroke="var(--surf)" stroke-width="2.5"/>';
+  const ch=S[S.length-1][1]-S[0][1];
+  $('vNote').textContent=usd(S[S.length-1][1],0)+' now · '+sgn(ch,0)+' over '+dur(t1-t0)+' · '+S.length+' points';
+}
+function drawP(){
+  const H=300,A=D.P[wP],B=D.P[({day:'perpDay',week:'perpWeek',month:'perpMonth',allTime:'perpAllTime'})[wP]];
+  if(!A||!A.pnl.length)return;
+  const S=pairSeries(A.pnl,B?B.pnl:null),t0=S[0][0],t1=S[S.length-1][0];
+  let lo=0,hi=0;S.forEach(r=>{lo=Math.min(lo,r[1],r[2]==null?0:r[2]);hi=Math.max(hi,r[1],r[2]==null?0:r[2]);});
+  const pad=(hi-lo||1)*.15,N=nice(lo-pad,hi+pad);
+  const x=t=>ML+(t-t0)/((t1-t0)||1)*(W-ML-MR), y=v=>MT+(1-(v-N.lo)/((N.hi-N.lo)||1))*(H-MT-MB);
+  GP={S,t0,t1,x,y};
+  const p=k=>S.filter(r=>r[k]!=null).map((r,i)=>(i?'L':'M')+x(r[0]).toFixed(1)+' '+y(r[k]).toFixed(1)).join(' ');
+  const area='M'+x(t0).toFixed(1)+' '+y(0).toFixed(1)+' '+S.map(r=>'L'+x(r[0]).toFixed(1)+' '+y(r[1]).toFixed(1)).join(' ')+' L'+x(t1).toFixed(1)+' '+y(0).toFixed(1)+'Z';
+  const fin=S[S.length-1][1];
+  $('c1').innerHTML=DEF+frame(H,N,y,x,t0,t1,true)+'<path d="'+area+'" fill="url(#ga)"/>'
+   +(B?'<path d="'+p(2)+'" fill="none" stroke="var(--alt)" stroke-width="1.6" opacity=".85"/>':'')
+   +'<path d="'+p(1)+'" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linejoin="round"/>'
+   +'<circle cx="'+x(t1).toFixed(1)+'" cy="'+y(fin).toFixed(1)+'" r="4.5" fill="var(--accent)" stroke="var(--surf)" stroke-width="2.5"/>';
+  $('cNote').textContent=sgn(fin,0)+' over '+dur(t1-t0)+' · rebased to zero at the start of the window';
+}
+function hook(boxId,svgId,tipId,g,fmt){
+  const box=$(boxId),tip=$(tipId);
+  box.addEventListener('mousemove',ev=>{const G=g();if(!G)return;
+    const rc=$(svgId).getBoundingClientRect(),xx=(ev.clientX-rc.left)/rc.width*W;
+    const t=G.t0+(xx-ML)/(W-ML-MR)*(G.t1-G.t0);
+    if(t<G.t0||t>G.t1){tip.style.opacity=0;return;}
+    let k=0,best=Infinity;G.S.forEach((r,i)=>{const d=Math.abs(r[0]-t);if(d<best){best=d;k=i;}});
+    tip.style.opacity=1;tip.innerHTML=fmt(G.S[k]);
+    const bx=box.getBoundingClientRect();let lx=ev.clientX-bx.left+16;
+    if(lx+210>bx.width)lx=ev.clientX-bx.left-210;
+    tip.style.left=lx+'px';tip.style.top=Math.max(6,ev.clientY-bx.top-64)+'px';});
+  box.addEventListener('mouseleave',()=>tip.style.opacity=0);
+}
+hook('box2','c2','tip2',()=>GV,r=>'<b>'+stamp(r[0]).slice(0,16)+'</b>account '+usd(r[1],2)+(r[2]!=null?'<br>perp '+usd(r[2],2):''));
+hook('box1','c1','tip1',()=>GP,r=>'<b>'+stamp(r[0]).slice(0,16)+'</b>account <span class="'+cls(r[1])+'">'+sgn(r[1],2)+'</span>'+(r[2]!=null?'<br>perps <span class="'+cls(r[2])+'">'+sgn(r[2],2)+'</span>':''));
+
+/* ---------------- wiring ---------------- */
+function seg(id,set){$(id).addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  [...$(id).children].forEach(c=>c.classList.toggle('on',c===b)); set(b.dataset.w);});}
+seg('segV',w=>{wV=w;drawV();});
+seg('segP',w=>{wP=w;drawP();});
+async function go(){
+  const M=$('loadMsg');M.className='loadmsg';M.textContent='reading the account…';
+  const a=$('ADDR').value.trim();
+  if(!isAddr(a)){M.className='loadmsg err';M.textContent='that is not a 0x… address of 40 hex characters';return;}
+  try{D=await build(a);isLive=true;remember(a);$('ADDR').value=a;
+    const u=new URL(location.href);u.searchParams.set('addr',a);
+    try{history.replaceState(null,'',u);}catch(e){}
+    render();
+    M.className='loadmsg ok';M.textContent=D.perps.length+' perp · '+D.rows.length+' spot lines · '+D.nFills+' fills replayed';}
+  catch(e){M.className='loadmsg err';
+    M.innerHTML='Could not read the account. '+(D?'What you see is the snapshot taken at the time above. ':'')
+      +'A hosted copy of this page cannot call the API at all; a downloaded one can, unless the address is wrong or the network is blocked. '
+      +'<span style="opacity:.65">('+e.message+')</span>';}
+}
+window.__GO__=go; window.__D__=()=>D;
+$('ADDR').value=startAddr; fillRecents();
+$('clearAddr').addEventListener('click',()=>{try{localStorage.removeItem(LS_A);localStorage.removeItem(LS_R);}catch(e){}
+  fillRecents();$('loadMsg').className='loadmsg';$('loadMsg').textContent='saved addresses cleared';});
+$('load').addEventListener('click',go);
+$('ADDR').addEventListener('keydown',e=>{if(e.key==='Enter')go();});
+render();
+if(startAddr) setTimeout(go,150);
+})();
+</script>
+
+</body>
+</html>
