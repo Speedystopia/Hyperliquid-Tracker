@@ -272,6 +272,11 @@ function sgn(v,d){d=d==null?2:d;return (v>=0?'+':'-')+'$'+Math.abs(v).toLocaleSt
 function qty(v,d){d=d==null?4:d;return v.toLocaleString(L,{minimumFractionDigits:0,maximumFractionDigits:d});}
 function pct(v,d){d=d==null?2:d;return (v>=0?'+':'')+(v*100).toFixed(d)+'%';}
 const cls=v=>v>0?'pos':(v<0?'neg':'dim');
+/* Token tickers, HIP-3 market names, vault names and descriptions, sub-account
+   names and API-agent labels are all free text chosen by third parties.
+   Everything from the API is escaped before it reaches innerHTML. */
+const ESCMAP={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};
+const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>ESCMAP[c]);
 function say(t,k){const m=$('msg');m.className='msg '+(k||'i');m.textContent=t;m.classList.remove('hide');}
 function hush(){$('msg').classList.add('hide');}
 const last=a=>(a&&a.length)?n(a[a.length-1][1]):0;
@@ -498,7 +503,7 @@ const accOf=id=>D.ACC.find(a=>a.id===id)||D.ACC[0];
 function accChip(id,plain){
   const a=accOf(id);
   return '<span class="accchip'+(plain?'':' clik')+'"'+(plain?'':' onclick="pickAcc(\''+id+'\')" title="Click to filter on this account"')
-    +'><i style="background:'+accColor(a.i)+'"></i>'+a.name+'</span>';
+    +'><i style="background:'+accColor(a.i)+'"></i>'+esc(a.name)+'</span>';
 }
 function pickAcc(id){
   ACCF=(ACCF===id)?'':id;
@@ -580,8 +585,8 @@ function renderBanner(){
     sev = h<=0?'crit' : h<0.5?'crit' : 'warn';
     head = h<=0?'Threshold already breached' : h<0.5?'Immediate action required'
          : h<2?'Action recommended' : 'Exposure flagged';
-    ttl = w.coin+' short is over-hedged at '+(w.ratio*100).toFixed(1)+'% of posted collateral';
-    sub = 'You are short <b>'+qty(w.Z,2)+' '+w.coin+'</b> against <b>'+qty(w.S,2)+'</b> supplied as collateral. '
+    ttl = esc(w.coin)+' short is over-hedged at '+(w.ratio*100).toFixed(1)+'% of posted collateral';
+    sub = 'You are short <b>'+qty(w.Z,2)+' '+esc(w.coin)+'</b> against <b>'+qty(w.S,2)+'</b> supplied as collateral. '
       +'Above <b>'+(w.neutralShort/w.S*100).toFixed(1)+'%</b> the liquidation value of the account <b>falls</b> as the price rises, '
       +'so a rally — not a decline — is what liquidates this position. ';
     sub += h<=0
@@ -603,7 +608,7 @@ function renderBanner(){
   if(exposed){
     const bx=(l,v,s,c)=>'<div class="box"><div class="l">'+l+'</div><div class="v '+(c||'')+'">'+v+'</div><div class="s">'+s+'</div></div>';
     boxes='<div class="grid">'
-      +bx('Current mark',usd(w.px,2),w.coin+' spot reference')
+      +bx('Current mark',usd(w.px,2),esc(w.coin)+' spot reference')
       +bx('Borrow-capacity breach',isFinite(w.pxCap)?usd(w.pxCap,2):'None',isFinite(w.pxCap)?pct((w.pxCap-w.px)/w.px,0)+' from spot':'LTV limit never binds')
       +bx('Portfolio-margin liquidation',isFinite(w.pxPM)?usd(w.pxPM,2):'None',isFinite(w.pxPM)?pct((w.pxPM-w.px)/w.px,0)+' from spot':'threshold never binds')
       +bx('Hedge ratio',(w.ratio*100).toFixed(1)+'%','limit '+(w.neutralShort/w.S*100).toFixed(1)+'%',w.ratio>w.neutralShort/w.S?'neg':'pos')
@@ -614,12 +619,12 @@ function renderBanner(){
   if(exposed){
     const t2=isFinite(w.first)?w.first*2:w.px*4, need2=Math.max(0,w.marginFor(t2));
     act='<div class="act"><b>Remediation — any one of the following.</b><br>'
-      +'&nbsp;&nbsp;1. <b>Reduce the short by '+qty(w.cutToNeutral,2)+' '+w.coin+'</b> ('+usd(w.cutToNeutral*w.px)+' notional), '
+      +'&nbsp;&nbsp;1. <b>Reduce the short by '+qty(w.cutToNeutral,2)+' '+esc(w.coin)+'</b> ('+usd(w.cutToNeutral*w.px)+' notional), '
       +'taking the position to '+qty(w.neutralShort,2)+'. This removes upside liquidation risk outright — '
       +'the account then gains liquidation value as the price rises.<br>'
-      +(w.cutToCap>0?'&nbsp;&nbsp;2. <b>Reduce the short by '+qty(w.cutToCap,2)+' '+w.coin+'</b> to '+qty(w.capShort,2)
+      +(w.cutToCap>0?'&nbsp;&nbsp;2. <b>Reduce the short by '+qty(w.cutToCap,2)+' '+esc(w.coin)+'</b> to '+qty(w.capShort,2)
         +' to stay inside the '+(w.ltv*100).toFixed(0)+'% borrow limit as well, so no automatic borrowing is ever required.<br>':'')
-      +'&nbsp;&nbsp;'+(w.cutToCap>0?'3':'2')+'. <b>Post '+qty(w.addCollateral,2)+' more '+w.coin+'</b> as collateral to bring the ratio back under the threshold.<br>'
+      +'&nbsp;&nbsp;'+(w.cutToCap>0?'3':'2')+'. <b>Post '+qty(w.addCollateral,2)+' more '+esc(w.coin)+'</b> as collateral to bring the ratio back under the threshold.<br>'
       +((need2>0&&t2>w.px)?'&nbsp;&nbsp;'+(w.cutToCap>0?'4':'3')+'. <b>Post '+usd(need2)+' of stablecoin collateral</b> to move the first constraint out to '+usd(t2,2)+'. '
         +'<span class="dim">This defers the constraint without removing it — only cutting the hedge ratio does that.</span>':'')
       +'</div>';
@@ -642,9 +647,9 @@ function renderVaults(){
     const lock=+(f.lockupUntil||v.lock||0);
     const locked=lock>now;
     const days=Math.ceil((lock-now)/86400000);
-    h+='<tr><td><b>'+(d.name||v.addr.slice(0,10)+'…')+'</b>'
-      +(d.description?'<div class="dim" style="font-weight:400;font-size:11px">'+d.description+'</div>':'')
-      +'<div class="mono dim" style="font-size:11px">'+v.addr.slice(0,8)+'…'+v.addr.slice(-6)+'</div></td>'
+    h+='<tr><td><b>'+esc(d.name||v.addr.slice(0,10)+'…')+'</b>'
+      +(d.description?'<div class="dim" style="font-weight:400;font-size:11px">'+esc(d.description)+'</div>':'')
+      +'<div class="mono dim" style="font-size:11px">'+esc(v.addr.slice(0,8))+'…'+esc(v.addr.slice(-6))+'</div></td>'
       +'<td><b>'+usd(n(f.vaultEquity)||v.eq,6)+'</b></td>'
       +'<td class="'+cls(n(f.pnl))+'">'+sgn(n(f.pnl),6)+'</td>'
       +'<td class="'+cls(n(f.allTimePnl))+'"><b>'+sgn(n(f.allTimePnl))+'</b></td>'
@@ -685,13 +690,13 @@ function renderOrders(){
     const fl=[];
     if(o.reduceOnly) fl.push('reduce-only');
     if(o.isPositionTpsl) fl.push('position TP/SL');
-    if(o.tif&&o.tif!=='Gtc') fl.push(o.tif==='Alo'?'post-only':o.tif);
-    h+='<tr><td><b>'+o.coin+'</b></td>'
+    if(o.tif&&o.tif!=='Gtc') fl.push(o.tif==='Alo'?'post-only':esc(o.tif));
+    h+='<tr><td><b>'+esc(o.coin)+'</b></td>'
       +'<td class="'+(buy?'pos':'neg')+'">'+(buy?'BUY':'SELL')+'</td>'
-      +'<td>'+(o.orderType||'Limit')+'</td>'
+      +'<td>'+esc(o.orderType||'Limit')+'</td>'
       +'<td>'+qty(sz,6)+(n(o.origSz)>sz?' <span class="dim">of '+qty(n(o.origSz),6)+'</span>':'')+'</td>'
       +'<td>'+usd(px,px<1?6:4)+'</td>'
-      +'<td>'+(o.isTrigger?usd(n(o.triggerPx),4)+' <span class="dim">'+(o.triggerCondition||'')+'</span>':'<span class="dim">—</span>')+'</td>'
+      +'<td>'+(o.isTrigger?usd(n(o.triggerPx),4)+' <span class="dim">'+esc(o.triggerCondition||'')+'</span>':'<span class="dim">—</span>')+'</td>'
       +'<td>'+usd(sz*px)+'</td>'
       +'<td class="'+(dist==null?'dim':Math.abs(dist)<0.01?'warn':'')+'">'+(dist==null?'—':pct(dist,2))+'</td>'
       +'<td class="dim">'+(fl.length?fl.join(' · '):'—')+'</td>'
@@ -733,7 +738,7 @@ function renderAccounts(){
   shown.forEach(r=>{
     const u=r.perpEq>0?r.mm/r.perpEq:0;
     h+='<tr data-acc="'+r.a.id+'" class="clik'+(ACCF===r.a.id?' sel':'')+'" onclick="pickAcc(\''+r.a.id+'\')">'
-      +'<td><span class="accchip"><i style="background:'+accColor(r.a.i)+'"></i><b>'+r.a.name+'</b></span>'
+      +'<td><span class="accchip"><i style="background:'+accColor(r.a.i)+'"></i><b>'+esc(r.a.name)+'</b></span>'
       +(r.a.i===0?'<span class="tag">master</span>':'')
       +(r.a.i>0&&r.ps.length===0&&r.perpEq>1?'<span class="tag" title="collateral sitting in the perpetual account with no open position">idle margin</span>':'')+'</td>'
       +'<td><b>'+usd(r.eq)+'</b> <span class="dim">('+(tot?(r.eq/tot*100).toFixed(1):'0.0')+'%)</span></td>'
@@ -745,7 +750,7 @@ function renderAccounts(){
         +sgn(r.a.i===0?D.per[0].pnl:(r.a.pf?r.a.pf[0].pnl:0))+'</td>'):'')
       +'<td>'+usd(r.mm,0)+'</td>'
       +'<td class="'+(u>0.66?'neg':u>0.4?'warn':'dim')+'">'+(u*100).toFixed(0)+'%</td>'
-      +'<td class="mono dim">'+(r.a.addr?r.a.addr.slice(0,6)+'…'+r.a.addr.slice(-4):'—')+'</td></tr>';
+      +'<td class="mono dim">'+(r.a.addr?esc(r.a.addr.slice(0,6))+'…'+esc(r.a.addr.slice(-4)):'—')+'</td></tr>';
   });
   h+='<tr><td class="dim">Consolidated</td><td><b>'+usd(tot)+'</b></td>'
     +'<td>'+usd(rows.reduce((x,r)=>x+r.perpEq,0))+'</td><td>'+usd(rows.reduce((x,r)=>x+r.spotV,0))+'</td>'
@@ -761,7 +766,7 @@ function renderAccounts(){
   const key=D.addr+'|'+(SHOWEMPTY?1:0);
   if(sel.dataset.k!==key){
     sel.innerHTML='<option value="">All accounts</option>'
-      +D.ACC.filter(a=>SHOWEMPTY||keep[a.id]).map(a=>'<option value="'+a.id+'">'+a.name+'</option>').join('');
+      +D.ACC.filter(a=>SHOWEMPTY||keep[a.id]).map(a=>'<option value="'+esc(a.id)+'">'+esc(a.name)+'</option>').join('');
     sel.dataset.k=key; sel.value=ACCF;
   }
   const tg=$('accToggle');
@@ -830,8 +835,8 @@ function render(){
   renderAccounts(); renderVaults(); renderOrders();
   renderBanner(); renderChart(); renderPerf(); renderSpot(); renderPerps();
   renderDelta(); renderDebt(); renderRepay(); renderMisc();
-  $('stamp').innerHTML='Address <span class="mono">'+D.addr+'</span> — retrieved '+new Date(D.t).toLocaleString(L)
-    +' — perpetual books: '+D.books.join(', ')+' — no order history was read.';
+  $('stamp').innerHTML='Address <span class="mono">'+esc(D.addr)+'</span> — retrieved '+new Date(D.t).toLocaleString(L)
+    +' — perpetual books: '+esc(D.books.join(', '))+' — no order history was read.';
   $('out').classList.remove('hide');
 }
 
@@ -931,7 +936,7 @@ function renderSpot(){
     }
     h+='<tr'+(D.nSub?' style="box-shadow:inset 3px 0 0 '+accColor(accOf(b.acc).i)+'"':'')+'>'
       +(D.nSub?'<td>'+accChip(b.acc)+'</td>':'')
-      +'<td><b>'+b.coin+'</b>'
+      +'<td><b>'+esc(b.coin)+'</b>'
       +(b.kind==='stake'?'&nbsp;<span class="tag" title="held in the staking account; not spot and not eligible as portfolio-margin collateral">staking</span>':'')
       +(b.kind==='perp'?'&nbsp;<span class="tag" title="'+b.ttl+'">perp collateral</span>':'')
       +(b.kind==='vault'?'&nbsp;<span class="tag" title="'+b.ttl+'">vault</span>':'')
@@ -992,7 +997,7 @@ function venueFunding(p){
     if(!d||name==='HlPerp') return;
     const hrs=n(d.fundingIntervalHours)||8;
     const a=-Math.sign(p.sz)*n(d.fundingRate)*(8760/hrs);
-    out.push('<span class="'+cls(a)+'">'+name.replace('Perp','')+' '+pct(a,1)+'</span>');
+    out.push('<span class="'+cls(a)+'">'+esc(String(name).replace('Perp',''))+' '+pct(a,1)+'</span>');
   });
   return out.length?out.join(' · '):'—';
 }
@@ -1012,7 +1017,7 @@ function renderPerps(){
     const up=D.perps.filter(x=>x.acc===a.id).reduce((x,p)=>x+p.upnl,0);
     const mm=a.i===0?D.mm:a.mm, wd=a.wd||0, u=eq>0?mm/eq:0;
     return '<tr class="grp"><td colspan="'+NC+'">'
-      +'<span class="accchip"><i style="background:'+accColor(a.i)+'"></i><b>'+a.name+'</b></span>'
+      +'<span class="accchip"><i style="background:'+accColor(a.i)+'"></i><b>'+esc(a.name)+'</b></span>'
       +'<span class="gsep">USDC collateral <b>'+usd(eq)+'</b></span>'
       +'<span class="gsep">unrealised <b class="'+cls(up)+'">'+sgn(up)+'</b></span>'
       +'<span class="gsep">maintenance <b>'+usd(mm)+'</b></span>'
@@ -1036,7 +1041,7 @@ function renderPerps(){
     if(r) any=true;
     h+='<tr'+(D.nSub?' style="box-shadow:inset 3px 0 0 '+accColor(accOf(p.acc).i)+'"':'')+'>'
       +(D.nSub?'<td>'+accChip(p.acc)+'</td>':'')
-      +'<td><b>'+p.base+'</b>'+(p.dex!=='core'?'&nbsp;<span class="tag">'+p.dex+'</span>':'')+'</td>'
+      +'<td><b>'+esc(p.base)+'</b>'+(p.dex!=='core'?'&nbsp;<span class="tag">'+esc(p.dex)+'</span>':'')+'</td>'
       +'<td class="'+(p.sz<0?'neg':'pos')+'">'+(p.sz<0?'SHORT':'LONG')+'</td>'
       +'<td>'+qty(Math.abs(p.sz),4)+'</td><td>'+usd(Math.abs(p.ntl))+'</td>'
       +'<td>'+usd(p.entry,p.entry<1?5:4)+'</td><td>'+usd(p.mark,p.mark<1?5:4)+'</td>'
@@ -1056,7 +1061,7 @@ function renderPerps(){
   let nt='';
   if(any){
     D.perps.filter(p=>p.dex==='core'&&p.sz<0&&p.acc==='main').map(p=>upside(p.base)).filter(r=>r&&r.Z>0).forEach(r=>{
-      nt+='<b>'+r.coin+'</b> — short of '+qty(r.Z,2)+' against '+qty(r.S,2)+' posted as collateral, a hedge ratio of <b>'
+      nt+='<b>'+esc(r.coin)+'</b> — short of '+qty(r.Z,2)+' against '+qty(r.S,2)+' posted as collateral, a hedge ratio of <b>'
         +(r.ratio*100).toFixed(1)+'%</b>. ';
       nt+=isFinite(r.first)
         ? 'First binding constraint at <b>'+usd(r.first,2)+'</b> ('+pct(r.headroom,0)+').<br>'
@@ -1087,7 +1092,7 @@ function renderDelta(){
   let h='<tr><th>Asset</th><th>Spot</th><th>Perpetual</th><th>Net delta</th><th>Price</th><th>Exposure</th><th>Hedge ratio</th></tr>';
   rows.forEach(r=>{
     const cov=r.s>0?Math.min(1,Math.abs(Math.min(0,r.p))/r.s):0;
-    h+='<tr><td><b>'+r.k+'</b></td><td>'+qty(r.s,4)+'</td><td class="'+cls(-r.p)+'">'+qty(r.p,4)+'</td>'
+    h+='<tr><td><b>'+esc(r.k)+'</b></td><td>'+qty(r.s,4)+'</td><td class="'+cls(-r.p)+'">'+qty(r.p,4)+'</td>'
       +'<td class="'+cls(r.net)+'"><b>'+qty(r.net,4)+'</b></td><td>'+usd(r.px,r.px<1?6:2)+'</td>'
       +'<td class="'+cls(r.val)+'">'+sgn(r.val)+'</td>'
       +'<td>'+(r.s>0&&r.p<0?(cov*100).toFixed(1)+'%':'<span class="dim">—</span>')+'</td></tr>';});
@@ -1134,7 +1139,7 @@ function renderRepay(){
   $('repayCard').classList.remove('hide');
   const sel=$('repaySel');
   if(sel.dataset.k!==D.addr){
-    sel.innerHTML=cands.map(b=>'<option value="'+b.coin+'">'+b.coin+' — '+usd(b.val)+'</option>').join('');
+    sel.innerHTML=cands.map(b=>'<option value="'+esc(b.coin)+'">'+esc(b.coin)+' — '+usd(b.val)+'</option>').join('');
     sel.dataset.k=D.addr;}
   calcRepay();
 }
@@ -1149,7 +1154,7 @@ function calcRepay(){
   const lvDelta=proceeds-creditLost;
   const pp=D.perps.filter(p=>p.base===coin&&p.acc==='main').reduce((a,p)=>a+p.sz,0);
   const before=b.qty+pp+(coin==='HYPE'?D.stkQ:0), after=before-need;
-  $('repayBig').innerHTML='Sell <b>'+qty(need,4)+' '+coin+'</b> ≈ '+usd(proceeds)
+  $('repayBig').innerHTML='Sell <b>'+qty(need,4)+' '+esc(coin)+'</b> ≈ '+usd(proceeds)
     +' <span class="dim" style="font-size:14px;font-weight:400">→ borrow '+usd(D.borrowed)+' ⟶ '+usd(Math.max(0,D.borrowed-proceeds))+'</span>';
   const rows=[], add=(k,v,c)=>rows.push('<div class="row"><span class="k">'+k+'</span><span class="v '+(c||'')+'">'+v+'</span></div>');
   add('Execution cost at your taker rate ('+(rateSpot*1e4).toFixed(1)+' bps)','−'+usd(fee),'neg');
@@ -1157,12 +1162,12 @@ function calcRepay(){
   add('Collateral credit forgone','−'+usd(creditLost),'neg');
   add('Borrow retired','−'+usd(Math.min(proceeds,D.borrowed)),'pos');
   add('Net effect on liquidation value',(lvDelta>=0?'+':'−')+usd(Math.abs(lvDelta)),cls(lvDelta));
-  add('Net delta, '+coin,qty(before,4)+'  ⟶  '+qty(after,4));
+  add('Net delta, '+esc(coin),qty(before,4)+'  ⟶  '+qty(after,4));
   $('repayR').innerHTML=rows.join('');
   $('repayN').innerHTML=(lvDelta>=0
     ? 'Debt is carried at par while collateral is credited at only '+(th*100).toFixed(1)+'%. Repayment therefore <b>improves</b> margin by '+usd(lvDelta)+'.'
     : 'Here repayment forgoes more credit than it retires in debt: margin deteriorates by '+usd(-lvDelta)+'.')
-    +' The trade-off is a reduction in long exposure of '+qty(need,4)+' '+coin+'.'
+    +' The trade-off is a reduction in long exposure of '+qty(need,4)+' '+esc(coin)+'.'
     +(D.fees?' Execution is costed at your actual spot taker rate of '+(rateSpot*1e4).toFixed(1)+' bps, read from <span class="mono">userFees</span>.':'');
 }
 
@@ -1189,8 +1194,8 @@ function renderMisc(){
   if(D.agents&&D.agents.length){
     D.agents.forEach(a=>{
       const exp=+a.validUntil, days=Math.ceil((exp-Date.now())/86400000);
-      add('API agent — '+(a.name||'unnamed'),
-        '<span class="mono">'+String(a.address).slice(0,8)+'…'+String(a.address).slice(-4)+'</span> · '
+      add('API agent — '+esc(a.name||'unnamed'),
+        '<span class="mono">'+esc(String(a.address).slice(0,8))+'…'+esc(String(a.address).slice(-4))+'</span> · '
         +(days>0?'valid '+days+' more day'+(days>1?'s':''):'expired'), days>0?'warn':'dim');
     });
   }
