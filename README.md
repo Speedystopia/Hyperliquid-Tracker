@@ -105,6 +105,19 @@ therefore far too conservative for a hedged book.
 
 ---
 
+## Security
+
+- **No secrets in the file.** No addresses, keys, tokens or credentials are
+  embedded. The only external host it contacts is `api.hyperliquid.xyz`.
+- **No storage.** No `localStorage`, no cookies, no IndexedDB. Nothing persists
+  between sessions.
+- **No `eval`, no dynamic code.** One `fetch` call, to the public info endpoint.
+- **API data is escaped before rendering.** Token tickers, HIP-3 market names,
+  vault names and descriptions, sub-account names and API-agent labels are free
+  text chosen by third parties. Every one is HTML-escaped, so a hostile name
+  renders as text instead of executing. This is verified against an injection
+  test suite.
+
 ## Endpoints used
 
 All public, all on `api.hyperliquid.xyz/info`:
@@ -133,3 +146,13 @@ All public, all on `api.hyperliquid.xyz/info`:
 - **Equity is not notional.** Perpetual equity is posted collateral plus unrealised
   P&L. The gross notional of the positions is leverage and is never added to
   equity; it appears as a memo line only.
+
+---
+
+## Licence
+
+MIT. See `LICENSE`.
+
+This is an analytics tool, not financial advice. Trigger prices are derived from
+public data and documented formulas; verify them against the exchange before
+acting on them.
