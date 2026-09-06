@@ -1,997 +1,1231 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>HYPE Position Ledger</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap">
-</head>
-<body>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hyperliquid Portfolio Monitor</title>
 <style>
+*{box-sizing:border-box}
 :root{
-  --ground:#F2F3F7; --surf:#FFFFFF; --surf2:#EAECF3; --surf3:#E0E3ED;
-  --line:#D3D7E3; --line2:#BEC4D6;
-  --ink:#12141C; --ink2:#4A4F60; --ink3:#7C8296;
-  --accent:#3B4EDB; --accent-soft:#3B4EDB18; --accent-ink:#2C3BAE;
-  --up:#0C8A64; --up-soft:#0C8A6418; --up-ink:#096B4E;
-  --dn:#C43B48; --dn-soft:#C43B481F; --dn-ink:#9C2B36;
-  --alt:#B0740A; --alt-soft:#B0740A18;
-  --shadow:0 1px 2px rgba(18,20,28,.06),0 8px 24px -12px rgba(18,20,28,.20);
-  --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
-  --sans:'Archivo','Helvetica Neue',Arial,sans-serif;
-  --serif:'Newsreader',Georgia,'Times New Roman',serif;
-  --r:10px;
+  --bg:#F7F7F5; --card:#FFFFFF; --ink:#1A1A18; --dim:#6B6B66; --line:#E4E4DF;
+  --acc:#3B4EDB; --pos:#127C4E; --neg:#C0392B; --warn:#B7791F; --chip:#F0F0EC;
+  --critbg:#FDECEA; --critbd:#E8A9A0; --warnbg:#FDF5E4; --warnbd:#E6CE94;
+  --okbg:#E9F5EE; --okbd:#A6D3B9;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --ground:#090A10; --surf:#12141C; --surf2:#181B25; --surf3:#1F232F;
-  --line:#272C3A; --line2:#353B4D;
-  --ink:#E9EBF2; --ink2:#A2A8BC; --ink3:#737A8F;
-  --accent:#6E7DF2; --accent-soft:#6E7DF222; --accent-ink:#8E9BFF;
-  --up:#2BB98C; --up-soft:#2BB98C22; --up-ink:#46CFA3;
-  --dn:#E4666F; --dn-soft:#E4666F26; --dn-ink:#F0868D;
-  --alt:#D9A03C; --alt-soft:#D9A03C1F;
-  --shadow:0 1px 2px rgba(0,0,0,.45),0 12px 32px -16px rgba(0,0,0,.75);
+  --bg:#151513; --card:#1E1E1C; --ink:#EDEDE8; --dim:#9A9A93; --line:#32322E;
+  --acc:#6E7DF2; --pos:#4ADE80; --neg:#F87171; --warn:#FBBF24; --chip:#262623;
+  --critbg:#3A1D19; --critbd:#7C3B33; --warnbg:#332714; --warnbd:#6E5522;
+  --okbg:#16301F; --okbd:#2F5E3F;
 }}
 :root[data-theme="dark"]{
-  --ground:#090A10; --surf:#12141C; --surf2:#181B25; --surf3:#1F232F;
-  --line:#272C3A; --line2:#353B4D;
-  --ink:#E9EBF2; --ink2:#A2A8BC; --ink3:#737A8F;
-  --accent:#6E7DF2; --accent-soft:#6E7DF222; --accent-ink:#8E9BFF;
-  --up:#2BB98C; --up-soft:#2BB98C22; --up-ink:#46CFA3;
-  --dn:#E4666F; --dn-soft:#E4666F26; --dn-ink:#F0868D;
-  --alt:#D9A03C; --alt-soft:#D9A03C1F;
-  --shadow:0 1px 2px rgba(0,0,0,.45),0 12px 32px -16px rgba(0,0,0,.75);
+  --bg:#151513; --card:#1E1E1C; --ink:#EDEDE8; --dim:#9A9A93; --line:#32322E;
+  --acc:#6E7DF2; --pos:#4ADE80; --neg:#F87171; --warn:#FBBF24; --chip:#262623;
+  --critbg:#3A1D19; --critbd:#7C3B33; --warnbg:#332714; --warnbd:#6E5522;
+  --okbg:#16301F; --okbd:#2F5E3F;
 }
-*{box-sizing:border-box}
-body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
-.wrap{max-width:1360px;margin:0 auto;padding:20px 20px 72px}
-header{padding:8px 2px 18px;border-bottom:1px solid var(--line)}
-h1{font-size:23px;font-weight:700;letter-spacing:-.022em;margin:0;text-wrap:balance}
-.sub{color:var(--ink2);font-size:12.5px;margin-top:5px;max-width:88ch}
-.card{background:var(--surf);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);min-width:0}
-.card-h{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 16px;border-bottom:1px solid var(--line)}
-.card-h h2{font-size:13px;font-weight:600;margin:0}
-.card-h .note{font:400 11px/1.35 var(--mono);color:var(--ink3);text-align:right}
-.klab{font:500 10px/1.3 var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--ink3)}
+body{background:var(--bg);color:var(--ink);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;margin:0;padding:20px 16px 60px}
+.wrap{max-width:1120px;margin:0 auto}
+h1{font-size:19px;font-weight:650;margin:0 0 14px;letter-spacing:-.01em}
+h2{font-size:12px;font-weight:650;text-transform:uppercase;letter-spacing:.07em;color:var(--dim);margin:0 0 10px}
+h2.tog{cursor:pointer;user-select:none;display:flex;align-items:center;gap:8px;margin:-4px -4px 10px;padding:4px}
+h2.tog:hover{color:var(--ink)}
+.chev{width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:6px solid currentColor;margin-left:auto;transition:transform .15s;flex:none}
+.card.shut .chev{transform:rotate(-90deg)}
+.card.shut h2.tog{margin-bottom:0}
+.card.shut .bd{display:none}
+.tools{display:flex;gap:8px;margin:0 0 12px;align-items:center;flex-wrap:wrap}
+#accBar.hide{display:none!important}
+.accchip{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.accchip i{width:9px;height:9px;border-radius:2.5px;flex:none;display:inline-block}
+.accchip.clik{cursor:pointer;border-radius:5px;padding:1px 5px;margin:-1px -5px}
+.accchip.clik:hover{background:var(--chip)}
+tr.clik{cursor:pointer}
+tr.clik:hover td{background:var(--chip)}
+tr.sel td{background:var(--chip);font-weight:600}
+tr.grp td{background:var(--chip);font-size:12px;padding:8px 10px;text-align:left;color:var(--dim)}
+tr.grp b{color:var(--ink);font-variant-numeric:tabular-nums}
+.gsep{margin-left:16px;white-space:nowrap}
+#accClear{display:inline-flex;align-items:center;gap:6px}
+#accClear.hide{display:none!important}
+select#accSel{max-width:200px}
+button.sm{padding:5px 10px;font-size:12px}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:14px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+input[type=text]{flex:1;min-width:280px;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 12px;color:var(--ink);font:13px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;outline:none}
+input[type=text]:focus{border-color:var(--acc)}
+button{background:var(--acc);color:#fff;border:0;border-radius:8px;padding:10px 16px;font:600 13px/1 inherit;cursor:pointer}
+button.gh{background:transparent;color:var(--dim);border:1px solid var(--line)}
+button:disabled{opacity:.5;cursor:default}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:14px}
+.kpi{background:var(--card);padding:12px 14px}
+.kpi .l{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.05em}
+.kpi .v{font-size:19px;font-weight:650;margin-top:3px;font-variant-numeric:tabular-nums}
+.kpi .s{font-size:11px;color:var(--dim);margin-top:2px;font-variant-numeric:tabular-nums}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--dim);text-align:right;padding:6px 8px;font-weight:600;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+td{padding:7px 8px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap;font-size:13px}
+tr:last-child td{border-bottom:0}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.pos{color:var(--pos)} .neg{color:var(--neg)} .dim{color:var(--dim)} .warn{color:var(--warn)}
+.tag{display:inline-block;background:var(--chip);border-radius:5px;padding:1px 6px;font-size:11px;color:var(--dim);margin-left:5px}
+.msg{padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:14px}
+.msg.e{background:var(--critbg);color:var(--neg);border:1px solid var(--critbd)}
+.msg.i{background:var(--chip);color:var(--dim);border:1px solid var(--line)}
+.rows{display:grid;gap:0}
+.row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.row:last-child{border-bottom:0}
+.row .k{color:var(--dim);font-size:13px}
+.row .v{font-weight:600;font-size:13px}
+.big{font-size:24px;font-weight:680;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+select{background:var(--card);border:1px solid var(--line);border-radius:7px;padding:6px 9px;color:var(--ink);font:13px inherit}
+.note{font-size:12px;color:var(--dim);margin-top:10px;line-height:1.55}
+.hf{height:6px;background:var(--chip);border-radius:3px;overflow:hidden;margin:8px 0 4px}
+.hf i{display:block;height:100%;border-radius:3px}
+.hide{display:none}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px}
 
-.verdict{margin-top:18px;background:var(--surf);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
-.kpis{display:grid;grid-template-columns:repeat(5,1fr)}
-.kpi{padding:15px 18px 17px;border-right:1px solid var(--line)}
-.kpi:last-child{border-right:0}
-.kval{font:600 25px/1.1 var(--mono);letter-spacing:-.03em;margin-top:7px;font-variant-numeric:tabular-nums}
-.kval.sm{font-size:20px}
-.ksub{font:400 11px/1.4 var(--mono);color:var(--ink3);margin-top:5px;font-variant-numeric:tabular-nums}
-.up{color:var(--up-ink)} .dn{color:var(--dn-ink)}
-
-.grid{display:grid;grid-template-columns:340px minmax(0,1fr);gap:18px;margin-top:18px;align-items:start}
-.grid>*,.grid>div>*{min-width:0}
-.rail{position:sticky;top:18px;max-height:calc(100vh - 36px);overflow-y:auto}
-.sec{border-bottom:1px solid var(--line);padding:13px 16px 15px}
-.sec:last-child{border-bottom:0}
-.sec-t{font:600 10px/1 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin-bottom:10px;display:flex;align-items:center;gap:8px}
-.sec-t::after{content:"";flex:1;height:1px;background:var(--line)}
-input[type=text],textarea{width:100%;padding:7px 9px;border:1px solid var(--line2);border-radius:6px;background:var(--surf);color:var(--ink);font:400 11px/1.5 var(--mono);resize:vertical}
-input:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:8px 13px;border-radius:7px;border:1px solid var(--line2);background:var(--surf);color:var(--ink);cursor:pointer;font:500 12px/1 var(--sans)}
-.btn:hover{border-color:var(--accent);color:var(--accent-ink)}
-.btn.wide{width:100%;margin-top:9px}
-.loadmsg{font:400 11px/1.45 var(--mono);color:var(--ink3);margin-top:9px}
-.loadmsg.err{color:var(--alt)} .loadmsg.ok{color:var(--up-ink)}
-.mini{display:grid;gap:7px}
-.mrow{display:flex;justify-content:space-between;gap:10px;font:400 11.5px/1.6 var(--mono);color:var(--ink2);font-variant-numeric:tabular-nums}
-.mrow b{color:var(--ink);font-weight:500}
-
-.legs{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line)}
-.leg{background:var(--surf);padding:15px 18px 17px}
-.leg-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:11px}
-.leg-h .nm{font:600 15px/1 var(--sans)}
-.tag{font:600 9.5px/1 var(--sans);letter-spacing:.09em;text-transform:uppercase;padding:4px 7px;border-radius:5px}
-.tag.spot{background:var(--accent-soft);color:var(--accent-ink)}
-.tag.perp{background:var(--alt-soft);color:var(--alt)}
-.leg-pnl{font:600 26px/1.05 var(--mono);letter-spacing:-.03em;font-variant-numeric:tabular-nums;margin-bottom:12px}
-table.led{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
-table.led td{padding:5px 0;font-size:12.5px;border-bottom:1px dotted var(--line2)}
-table.led td:first-child{color:var(--ink2)}
-table.led td:last-child{text-align:right;font-family:var(--mono)}
-table.led tr:last-child td{border-bottom:0}
-table.led tr.tot td{border-bottom:0;border-top:1.5px solid var(--line2);padding-top:8px;font-weight:600;color:var(--ink);font-size:13.5px}
-
-.chartbox{padding:12px 14px 2px;position:relative}
-svg.chart{display:block;width:100%;height:auto;overflow:visible}
-.legend{display:flex;gap:18px;flex-wrap:wrap;padding:4px 20px 14px;font-size:11.5px;color:var(--ink2)}
-.lg{display:inline-flex;align-items:center;gap:7px}
-.sw{width:18px;height:3px;border-radius:2px;display:inline-block}
-.sw.d{background:none;border-top:2px dashed var(--ink3);height:0}
-.tip{position:absolute;pointer-events:none;opacity:0;transition:opacity .1s;background:var(--surf);border:1px solid var(--line2);border-radius:8px;padding:9px 11px;box-shadow:var(--shadow);font:400 11.5px/1.65 var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap;z-index:5}
-.tip b{font-family:var(--sans);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3);font-weight:600;display:block;margin-bottom:4px}
-
-.tbl{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
-.tbl th{font:600 9.5px/1 var(--sans);letter-spacing:.09em;text-transform:uppercase;color:var(--ink3);text-align:right;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
-.tbl th:first-child,.tbl td:first-child{text-align:left}
-.tbl td{padding:7px 12px;font:400 11.5px/1.4 var(--mono);border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
-.tbl tr:last-child td{border-bottom:0}
-.tbl tbody tr:hover td{background:var(--surf2)}
-.pillx{display:inline-block;font:600 9.5px/1 var(--sans);letter-spacing:.06em;text-transform:uppercase;padding:3px 6px;border-radius:4px}
-.pillx.b{background:var(--up-soft);color:var(--up-ink)}
-.pillx.a{background:var(--dn-soft);color:var(--dn-ink)}
-.scroll{overflow-x:auto}
-
-.rec{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line)}
-.rcell{background:var(--surf);padding:12px 15px 14px}
-.rrow{display:flex;justify-content:space-between;font:400 11.5px/1.65 var(--mono);color:var(--ink2)}
-.rrow b{color:var(--ink);font-weight:500}
-.vl{margin-top:6px;font:600 10px/1 var(--sans);letter-spacing:.07em;text-transform:uppercase}
-.vl.ok{color:var(--up-ink)} .vl.bad{color:var(--dn-ink)}
-
-.prose{padding:18px 22px 24px;font-family:var(--serif);font-size:15px;line-height:1.62;color:var(--ink2)}
-.prose p{margin:0 0 12px;max-width:74ch}
-.prose h3{font-family:var(--sans);font-size:12px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--ink3);margin:20px 0 9px}
-.prose h3:first-child{margin-top:0}
-.prose code{font-family:var(--mono);font-size:12px;background:var(--surf2);padding:1px 5px;border-radius:4px;color:var(--ink)}
-.prose strong{color:var(--ink);font-weight:500}
-footer{margin-top:22px;padding-top:14px;border-top:1px solid var(--line);font-size:11.5px;color:var(--ink3);display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap}
-@media (max-width:1040px){
-  .grid{grid-template-columns:1fr} .rail{position:static;max-height:none}
-  .kpis{grid-template-columns:repeat(2,1fr)}
-  .kpi{border-bottom:1px solid var(--line)} .kpi:nth-child(odd){border-right:1px solid var(--line)} .kpi:nth-child(even){border-right:0}
-  .kpi:last-child{grid-column:1/-1;border-right:0;border-bottom:0}
-  .legs{grid-template-columns:1fr} .rec{grid-template-columns:1fr 1fr}
-}
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+/* ---- risk banner ---- */
+.alert{border-radius:12px;border:1px solid;padding:16px 18px;margin-bottom:16px}
+.alert .hd{display:flex;align-items:center;gap:10px;font-weight:700;font-size:14px;letter-spacing:.02em;text-transform:uppercase}
+.alert .dot{width:10px;height:10px;border-radius:50%;flex:none}
+.alert .ttl{font-size:17px;font-weight:680;margin:8px 0 2px;letter-spacing:-.01em}
+.alert .sub{font-size:13px;line-height:1.6}
+.alert .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:14px 0 4px}
+.alert .box{background:rgba(127,127,127,.09);border-radius:8px;padding:10px 12px}
+.alert .box .l{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;opacity:.75}
+.alert .box .v{font-size:17px;font-weight:680;font-variant-numeric:tabular-nums;margin-top:2px}
+.alert .box .s{font-size:11px;opacity:.75;font-variant-numeric:tabular-nums}
+.alert .act{margin-top:14px;padding-top:12px;border-top:1px solid rgba(127,127,127,.25);font-size:13px;line-height:1.65}
+.alert .act b{font-weight:680}
+.alert.crit{background:var(--critbg);border-color:var(--critbd);color:var(--ink)}
+.alert.crit .dot{background:var(--neg);animation:pulse 1.4s ease-in-out infinite}
+.alert.crit .hd{color:var(--neg)}
+.alert.warn{background:var(--warnbg);border-color:var(--warnbd);color:var(--ink)}
+.alert.warn .dot{background:var(--warn)}
+.alert.warn .hd{color:var(--warn)}
+.alert.ok{background:var(--okbg);border-color:var(--okbd);color:var(--ink)}
+.alert.ok .dot{background:var(--pos)}
+.alert.ok .hd{color:var(--pos)}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.8)}}
+@media(prefers-reduced-motion:reduce){.alert.crit .dot{animation:none}}
+@media(max-width:640px){body{padding:14px 10px 50px}.kpi .v{font-size:17px}td,th{padding:6px 6px;font-size:12px}.alert .ttl{font-size:15px}}
 </style>
-<style>
-.seg{display:inline-flex;border:1px solid var(--line2);border-radius:7px;overflow:hidden}
-.seg button{border:0;background:var(--surf);color:var(--ink2);font:500 11.5px/1 var(--sans);padding:7px 11px;cursor:pointer;border-right:1px solid var(--line)}
-.seg button:last-child{border-right:0}
-.seg button.on{background:var(--accent);color:#fff}
-.seg button:hover:not(.on){background:var(--surf2);color:var(--ink)}
-.pos{display:grid;gap:1px;background:var(--line)}
-.pcard{background:var(--surf);padding:15px 18px 17px}
-.ph{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:12px}
-.ph .nm{font:600 17px/1 var(--sans);letter-spacing:-.01em}
-.ph .sz{font:400 12px/1 var(--mono);color:var(--ink3)}
-.pg{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:14px 18px}
-.pg .klab{font-size:9.5px}
-.pv{font:500 15px/1.2 var(--mono);margin-top:5px;font-variant-numeric:tabular-nums}
-.pv.big{font-size:19px;font-weight:600;letter-spacing:-.02em}
-.bar{height:5px;border-radius:3px;background:var(--surf3);overflow:hidden;margin-top:7px}
-.bar i{display:block;height:100%;border-radius:3px}
-.warnbox{margin:0 16px 14px;padding:9px 11px;border-radius:7px;background:var(--alt-soft);
-  border:1px solid color-mix(in srgb,var(--alt) 34%,transparent);color:var(--alt);font-size:11.5px;line-height:1.45}
-@media (max-width:640px){.kpis{grid-template-columns:1fr}.kpi{border-right:0!important}}
-</style>
-<style>
-.banner{margin-top:16px;padding:12px 16px;border-radius:var(--r);font-size:13px;line-height:1.5}
-.banner b{font-weight:600}
-.banner.watch{background:var(--alt-soft);border:1px solid color-mix(in srgb,var(--alt) 38%,transparent);color:var(--alt)}
-.banner.danger{background:var(--dn-soft);border:1px solid color-mix(in srgb,var(--dn) 45%,transparent);color:var(--dn-ink)}
-.pill{display:inline-flex;align-items:center;gap:6px;font:600 10px/1 var(--sans);letter-spacing:.1em;
-  text-transform:uppercase;padding:5px 9px;border-radius:5px}
-.pill::before{content:"";width:6px;height:6px;border-radius:2px;background:currentColor}
-.pill.safe{background:var(--up-soft);color:var(--up-ink)}
-.pill.watch{background:var(--alt-soft);color:var(--alt)}
-.pill.danger{background:var(--dn-soft);color:var(--dn-ink)}
-#riskGrid,#capGrid,#heldGrid{grid-template-columns:repeat(3,1fr)}
-#riskGrid .pv,#capGrid .pv,#heldGrid .pv{font:600 21px/1.1 var(--mono);letter-spacing:-.02em;margin-top:7px;font-variant-numeric:tabular-nums}
-@media (max-width:1040px){#riskGrid,#capGrid,#heldGrid{grid-template-columns:1fr 1fr}}
-</style>
-<style>
-.capwrap{padding:22px 24px 26px}
-.capbig{font:700 46px/1 var(--mono);letter-spacing:-.04em;font-variant-numeric:tabular-nums}
-.capbig.up{color:var(--up-ink)} .capbig.dn{color:var(--dn-ink)}
-.capsub{font:400 13px/1.5 var(--sans);color:var(--ink2);margin-top:8px}
-.capsub b{color:var(--ink);font-weight:600}
-.capwhy{font-family:var(--serif);font-size:15.5px;line-height:1.6;color:var(--ink2);margin:18px 0 0;max-width:70ch}
-.capwhy b{color:var(--ink);font-weight:500}
-.capbar{position:relative;margin:46px 4px 62px}
-.capbar .cb{position:relative;height:12px;border-radius:6px;background:var(--surf3);overflow:hidden}
-.capbar .fill{position:absolute;left:0;top:0;bottom:0;background:var(--accent);border-radius:6px}
-.capbar .zone{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(45deg,transparent,transparent 5px,color-mix(in srgb,var(--dn) 26%,transparent) 5px,color-mix(in srgb,var(--dn) 26%,transparent) 6px)}
-.capbar .mk{position:absolute;top:-6px;height:24px;width:2px;background:var(--accent)}
-.capbar .mk.lim{background:var(--ink2)} .capbar .mk.bad{background:var(--dn)}
-.capbar .mk span{position:absolute;top:26px;left:0;transform:translateX(-50%);white-space:nowrap;
-  font:400 11px/1.45 var(--mono);color:var(--ink3);text-align:center}
-.capbar .mk span b{display:block;color:var(--ink);font-weight:600;font-size:12.5px}
-.capbar .mk:first-child span{transform:translateX(-10%)}
-.capbar .mk.bad span{transform:translateX(-88%)}
-.caprows{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:14px;
-  border-top:1px solid var(--line);padding-top:18px}
-.caprows p{font:400 13px/1.55 var(--sans);color:var(--ink2);margin:7px 0 0}
-@media (max-width:820px){.caprows{grid-template-columns:1fr}.capbig{font-size:36px}
-  .capbar .mk span{font-size:10px}}
-</style>
-<style>
-.hint{margin-top:10px;font:400 11px/1.55 var(--sans);color:var(--ink3)}
-.hint code{font-family:var(--mono);font-size:10.5px;background:var(--surf2);padding:1px 4px;border-radius:3px;color:var(--ink2)}
-.lnk{display:inline;border:0;background:none;padding:0;margin-top:4px;color:var(--accent-ink);
-  font:400 11px/1.55 var(--sans);cursor:pointer;text-decoration:underline}
-</style>
+</head><body>
 <div class="wrap">
-<header>
-  <h1>Open positions</h1>
-</header>
+<h1>Hyperliquid Portfolio Monitor</h1>
 
-<div class="banner" id="banner" hidden></div>
+<div class="bar">
+  <input type="text" id="ADDR" placeholder="0x… public address" spellcheck="false" autocomplete="off">
+  <button id="go">Run</button>
+  <button id="clr" class="gh">Clear</button>
+</div>
 
-<div class="verdict">
+<div id="msg" class="hide"></div>
+
+<div id="out" class="hide">
+
+  <div id="banner"></div>
+
   <div class="kpis">
-    <div class="kpi"><div class="klab">Net worth</div><div class="kval" id="kNw">—</div><div class="ksub" id="kNwSub">—</div></div>
-    <div class="kpi"><div class="klab">Open P&amp;L</div><div class="kval sm" id="kOpen">—</div><div class="ksub" id="kOpenSub">—</div></div>
-    <div class="kpi"><div class="klab">P&amp;L today</div><div class="kval sm" id="kDay">—</div><div class="ksub" id="kDaySub">—</div></div>
-    <div class="kpi"><div class="klab">P&amp;L all time</div><div class="kval sm" id="kAll">—</div><div class="ksub" id="kAllSub">—</div></div>
-    <div class="kpi"><div class="klab">Funding on open positions</div><div class="kval sm" id="kFund">—</div><div class="ksub" id="kFundSub">—</div></div>
+    <div class="kpi"><div class="l">Total equity</div><div class="v num" id="kEq">—</div><div class="s" id="kEqS">—</div></div>
+    <div class="kpi"><div class="l">Perpetuals</div><div class="v num" id="kPe">—</div><div class="s" id="kPeS">—</div></div>
+    <div class="kpi"><div class="l">Spot</div><div class="v num" id="kSp">—</div><div class="s" id="kSpS">—</div></div>
+    <div class="kpi"><div class="l">24h P&amp;L</div><div class="v num" id="kPn">—</div><div class="s" id="kPnS">—</div></div>
+    <div class="kpi hide"><div class="l">Staking + vaults</div><div class="v num" id="kStk">—</div><div class="s" id="kStkS">—</div></div>
+    <div class="kpi hide"><div class="l">Sub-accounts</div><div class="v num" id="kSub">—</div><div class="s" id="kSubS">—</div></div>
+    <div class="kpi"><div class="l">Health factor</div><div class="v num" id="kHf">—</div><div class="s" id="kHfS">—</div></div>
   </div>
+
+  <div class="tools">
+    <button class="gh sm" id="allOpen">Expand all</button>
+    <button class="gh sm" id="allShut">Collapse all</button>
+    <button class="gh sm hide" id="accClear"></button>
+    <button class="gh sm hide" id="scopeBtn"></button>
+    <span id="accBar" class="hide" style="display:flex;align-items:center;gap:6px;margin-left:auto">
+      <span class="dim" style="font-size:12px">Account</span>
+      <select id="accSel"></select>
+    </span>
+  </div>
+
+  <div class="card hide" id="accCard">
+    <h2 class="tog">Accounts<i class="chev"></i></h2>
+    <div class="bd">
+      <div class="scroll"><table id="accT"></table></div>
+      <button class="gh sm hide" id="accToggle" style="margin-top:10px"></button>
+      <div class="note" id="accN"></div>
+    </div>
+  </div>
+
+  <div class="card hide" id="chartCard">
+    <h2 class="tog">Equity curve<i class="chev"></i></h2>
+    <div class="bd">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+        <select id="cM"><option value="eq">Account value</option><option value="pnl">P&amp;L</option></select>
+        <select id="cW"><option value="allTime">All time</option><option value="month">30 days</option><option value="week">7 days</option><option value="day">24 hours</option></select>
+      </div>
+      <div id="chart"></div>
+      <div id="chartAx" style="display:flex;justify-content:space-between;font-size:11px;color:var(--dim);margin-top:4px"></div>
+      <div id="chartLeg" style="font-size:12px;margin-top:8px"></div>
+    </div>
+  </div>
+
+  <div class="card" id="perfCard">
+    <h2 class="tog">Performance — as reported by Hyperliquid<i class="chev"></i></h2>
+    <div class="bd">
+      <div class="scroll"><table id="perfT"></table></div>
+      <div class="note" id="perfN"></div>
+    </div>
+  </div>
+
+  <div class="card" id="spotCard">
+    <h2 class="tog">Holdings — spot, collateral and staking<i class="chev"></i></h2>
+    <div class="bd">
+      <div class="scroll"><table id="spotT"></table></div>
+      <div class="note" id="spotN"></div>
+    </div>
+  </div>
+
+  <div class="card" id="perpCard">
+    <h2 class="tog">Perpetual positions<i class="chev"></i></h2>
+    <div class="bd">
+      <div class="scroll"><table id="perpT"></table></div>
+      <div class="note" id="perpN"></div>
+    </div>
+  </div>
+
+  <div class="card hide" id="ordCard">
+    <h2 class="tog">Resting orders<i class="chev"></i></h2>
+    <div class="bd">
+      <div class="scroll"><table id="ordT"></table></div>
+      <div class="note" id="ordN"></div>
+    </div>
+  </div>
+
+  <div class="card hide" id="vaultCard">
+    <h2 class="tog">Vault positions<i class="chev"></i></h2>
+    <div class="bd">
+      <div class="scroll"><table id="vaultT"></table></div>
+      <div class="note" id="vaultN"></div>
+    </div>
+  </div>
+
+  <div class="card" id="deltaCard">
+    <h2 class="tog">Net delta — spot less perpetuals<i class="chev"></i></h2>
+    <div class="bd">
+      <div class="scroll"><table id="deltaT"></table></div>
+      <div class="note" id="deltaN"></div>
+    </div>
+  </div>
+
+  <div class="card" id="debtCard">
+    <h2 class="tog">Borrowing and margin<i class="chev"></i></h2>
+    <div class="bd">
+      <div class="rows" id="debtR"></div>
+      <div class="hf"><i id="hfBar"></i></div>
+      <div class="note" id="debtN"></div>
+    </div>
+  </div>
+
+  <div class="card" id="repayCard">
+    <h2 class="tog">Debt repayment via spot disposal<i class="chev"></i></h2>
+    <div class="bd">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+        <span class="dim" style="font-size:13px">Sell:</span>
+        <select id="repaySel"></select>
+        <span class="dim" style="font-size:13px">to retire</span>
+        <select id="repayPct"><option value="1">100% of outstanding debt</option><option value="0.5">50%</option><option value="0.25">25%</option></select>
+      </div>
+      <div class="big" id="repayBig">—</div>
+      <div class="rows" id="repayR"></div>
+      <div class="note" id="repayN"></div>
+    </div>
+  </div>
+
+  <div class="card" id="miscCard">
+    <h2 class="tog">Ancillary balances<i class="chev"></i></h2>
+    <div class="bd"><div class="rows" id="miscR"></div></div>
+  </div>
+
+  <div class="note" id="stamp"></div>
 </div>
-
-<div class="grid">
-  <div class="card rail">
-    <div class="card-h"><h2>Account</h2><span class="note" id="srcNote">—</span></div>
-    <div class="sec">
-      <div class="sec-t">Public address</div>
-      <input type="text" id="ADDR" spellcheck="false" placeholder="0x…" list="recent" autocomplete="off">
-      <datalist id="recent"></datalist>
-      <button class="btn wide" id="load">Read positions</button>
-      <div class="loadmsg" id="loadMsg"></div>
-      <div class="hint">Paste an address and press Enter. The last one is remembered, and the
-        eight most recent are offered in the field. Adding <code>?addr=0x…</code> to the link opens
-        that address straight away, so a bookmark per account works.
-        <button class="lnk" id="clearAddr">forget saved addresses</button></div>
-    </div>
-    <div class="sec">
-      <div class="sec-t">Balance sheet</div>
-      <div class="mini" id="bs"></div>
-    </div>
-    <div class="sec">
-      <div class="sec-t">Margin</div>
-      <div class="mini" id="mg"></div>
-    </div>
-    <div class="sec">
-      <div class="sec-t">Borrow cost</div>
-      <div class="mini" id="borrow"></div>
-    </div>
-    <div class="sec">
-      <div class="sec-t">Dust hidden</div>
-      <div class="mini" id="dust"></div>
-    </div>
-  </div>
-
-  <div style="display:grid;gap:18px;min-width:0">
-
-    <div class="card" id="perpCard">
-      <div class="card-h"><h2>Perp positions</h2><span class="note" id="perpNote">—</span></div>
-      <div class="pos" id="perps"></div>
-    </div>
-
-    <div class="card" id="riskCard" hidden>
-      <div class="card-h"><h2>Borrow interest vs liquidation</h2>
-        <span style="display:flex;align-items:center;gap:10px"><span class="note" id="riskNote">—</span><span class="pill" id="riskPill">—</span></span>
-      </div>
-      <div class="rec" id="riskGrid"></div>
-      <div style="padding:16px 18px 4px">
-        <div class="klab">Pool utilisation · the mark is the 80% break</div>
-        <div style="position:relative;margin-top:8px" id="utilBar"></div>
-      </div>
-      <div class="scroll" style="padding-top:10px"><table class="tbl" id="scen"></table></div>
-    </div>
-
-    <div class="card" id="heldCard" hidden>
-      <div class="card-h"><h2>Staked, vaults and sub-accounts</h2><span class="note" id="heldNote">—</span></div>
-      <div class="rec" id="heldGrid"></div>
-      <div class="scroll"><table class="tbl" id="heldTbl" hidden></table></div>
-      <div class="scroll"><table class="tbl" id="heldTbl2" hidden></table></div>
-    </div>
-
-    <div class="card" id="capCard" hidden>
-      <div class="card-h"><h2>How much more you can borrow</h2></div>
-      <div class="capwrap">
-        <div class="capbig" id="capBig">—</div>
-        <div class="capsub" id="capSub">—</div>
-        <p class="capwhy" id="capWhy"></p>
-        <div class="capbar" id="capBar"></div>
-        <div class="caprows" id="capRows"></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-h"><h2>Spot holdings</h2><span class="note" id="spotNote">—</span></div>
-      <div class="scroll"><table class="tbl" id="spots"></table></div>
-    </div>
-
-    <div class="card">
-      <div class="card-h"><h2>Account value in USDC</h2>
-        <span class="seg" id="segV"><button data-w="day">24 h</button><button data-w="week">7 d</button><button data-w="month">30 d</button><button data-w="allTime" class="on">All</button></span>
-      </div>
-      <div class="chartbox" id="box2">
-        <svg class="chart" id="c2" viewBox="0 0 920 260" role="img" aria-label="Account value in USDC over time"></svg>
-        <div class="tip" id="tip2"></div>
-      </div>
-      <div class="legend">
-        <span class="lg"><span class="sw" style="background:var(--accent)"></span>Whole account</span>
-        <span class="lg"><span class="sw" style="background:var(--alt)"></span>Perp equity</span>
-        <span class="note" id="vNote" style="font:400 11px/1.35 var(--mono);color:var(--ink3)"></span>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-h"><h2>Cumulative P&amp;L</h2>
-        <span class="seg" id="segP"><button data-w="day">24 h</button><button data-w="week">7 d</button><button data-w="month">30 d</button><button data-w="allTime" class="on">All</button></span>
-      </div>
-      <div class="chartbox" id="box1">
-        <svg class="chart" id="c1" viewBox="0 0 920 300" role="img" aria-label="Cumulative profit and loss over time"></svg>
-        <div class="tip" id="tip1"></div>
-      </div>
-      <div class="legend">
-        <span class="lg"><span class="sw" style="background:var(--accent)"></span>Whole account</span>
-        <span class="lg"><span class="sw" style="background:var(--alt)"></span>Perps only</span>
-        <span class="note" id="cNote" style="font:400 11px/1.35 var(--mono);color:var(--ink3)"></span>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-h"><h2>Funding paid and received</h2><span class="note" id="fdNote">—</span></div>
-      <div class="scroll"><table class="tbl" id="fund"></table></div>
-    </div>
-
-  </div>
-</div>
-
-<footer>
-  <span>Read from public data. Informational, not advice.</span>
-  <span>Hyperliquid public info API — no authentication required or used</span>
-</footer>
 </div>
 <script>
-(function(){
-"use strict";
+const API='https://api.hyperliquid.xyz/info';
+const $=i=>document.getElementById(i);
+let D=null;
+
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function post(b,tries){
+  tries=tries||3;
+  for(let i=0;i<tries;i++){
+    const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});
+    if(r.ok) return r.json();
+    if(r.status===429||r.status>=500){await sleep(900*(i+1));continue;}
+    throw new Error('API '+r.status);
+  }
+  throw new Error('Rate limited by the API — retry in a few seconds');
+}
+const n=v=>{const x=parseFloat(v);return isFinite(x)?x:0;};
+const isAddr=s=>/^0x[0-9a-fA-F]{40}$/.test((s||'').trim());
+const L='en-US';
+function usd(v,d){d=d==null?2:d;return (v<0?'-':'')+'$'+Math.abs(v).toLocaleString(L,{minimumFractionDigits:d,maximumFractionDigits:d});}
+function sgn(v,d){d=d==null?2:d;return (v>=0?'+':'-')+'$'+Math.abs(v).toLocaleString(L,{minimumFractionDigits:d,maximumFractionDigits:d});}
+function qty(v,d){d=d==null?4:d;return v.toLocaleString(L,{minimumFractionDigits:0,maximumFractionDigits:d});}
+function pct(v,d){d=d==null?2:d;return (v>=0?'+':'')+(v*100).toFixed(d)+'%';}
+const cls=v=>v>0?'pos':(v<0?'neg':'dim');
+function say(t,k){const m=$('msg');m.className='msg '+(k||'i');m.textContent=t;m.classList.remove('hide');}
+function hush(){$('msg').classList.add('hide');}
+const last=a=>(a&&a.length)?n(a[a.length-1][1]):0;
+
 /* ============================================================
-   DEFAULT ADDRESS — edit the line below and save the file.
+   No order-history reads. Every figure below is taken from the
+   state endpoints that drive Hyperliquid's own Portfolio page.
    ============================================================ */
-const DEFAULT_ADDR = '0x90B1D9e1894Db604D8850c07DbC231681685138A';
-const ALWAYS_DEFAULT = false;   /* true = always open on DEFAULT_ADDR,
-                                   ignoring the last address you looked at */
-/* ========================================================== */
-
-const $=id=>document.getElementById(id);
-const API='https://api.hyperliquid.xyz/info', MIN=10;
-const STABLE={USDC:1,USDT0:1,USDT:1,USDH:1,USDE:1,FEUSD:1};
-/* No snapshot in this copy: the page reads the account live when it opens.
-   Leave this line in place — it declares D. */
-let D=null, isLive=false, wV='allTime', wP='allTime';
-
-/* the address to open with: ?addr= in the link, else the last one you looked at,
-   else whatever this file was built with. Nothing to edit by hand. */
-const LS_A='hl.addr', LS_R='hl.recent';
-const lsGet=(k,d)=>{try{const v=localStorage.getItem(k);return v===null?d:v;}catch(e){return d;}};
-const lsSet=(k,v)=>{try{localStorage.setItem(k,v);}catch(e){}};
-const isAddr=a=>/^0x[0-9a-fA-F]{40}$/.test((a||'').trim());
-function recents(){try{const r=JSON.parse(lsGet(LS_R,'[]'));return Array.isArray(r)?r.filter(isAddr):[];}catch(e){return [];}}
-function remember(a){if(!isAddr(a))return;lsSet(LS_A,a);
-  const r=[a].concat(recents().filter(x=>x.toLowerCase()!==a.toLowerCase())).slice(0,8);
-  lsSet(LS_R,JSON.stringify(r));fillRecents();}
-function fillRecents(){const dl=$('recent');if(!dl)return;
-  dl.innerHTML=recents().map(a=>'<option value="'+a+'"></option>').join('');}
-const startAddr=(()=>{
-  const q=new URLSearchParams(location.search).get('addr')
-        ||(location.hash.match(/0x[0-9a-fA-F]{40}/)||[])[0];
-  if(isAddr(q))return q.trim();                       /* 1. ?addr= in the link */
-  if(ALWAYS_DEFAULT&&isAddr(DEFAULT_ADDR))return DEFAULT_ADDR.trim();
-  const last=lsGet(LS_A,null);
-  if(isAddr(last))return last;                        /* 2. the last one you read */
-  if(isAddr(DEFAULT_ADDR))return DEFAULT_ADDR.trim(); /* 3. DEFAULT_ADDR above */
-  return D&&D.addr?D.addr:'';
-})();
-
-const nf=(v,d=2)=>(isFinite(v)?v:0).toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
-const usd=(v,d=2)=>(v<0?'−':'')+'$'+nf(Math.abs(v),d);
-const sgn=(v,d=2)=>(v>=0?'+':'−')+'$'+nf(Math.abs(v),d);
-const pc=(v,d=2)=>(v>=0?'+':'−')+nf(Math.abs(v*100),d)+'%';
-const cls=v=>v>0?'up':v<0?'dn':'';
-const stamp=t=>new Date(t).toISOString().slice(0,19).replace('T',' ')+'Z';
-const hhmm=t=>new Date(t).toISOString().slice(11,16);
-const dat=t=>new Date(t).toISOString().slice(5,10);
-const dur=ms=>{const m=Math.round(ms/6e4);if(m<90)return m+' min';const h=ms/36e5;if(h<48)return nf(h,1)+' h';
-  const d=h/24;return d<60?nf(d,1)+' d':nf(d/30.44,1)+' mo';};
-
-/* ---------------- read ---------------- */
-async function post(b){const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});
-  if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}
-
-async function build(addr){
-  const [sm,mids,mac,ps,ss,pf,fills,dexList]=await Promise.all([
-    post({type:'spotMeta'}),post({type:'allMids'}),post({type:'metaAndAssetCtxs'}),
-    post({type:'clearinghouseState',user:addr}),post({type:'spotClearinghouseState',user:addr}),
-    post({type:'portfolio',user:addr}),post({type:'userFills',user:addr,aggregateByTime:false}),
-    post({type:'perpDexs'}).catch(()=>[null])]);
-  /* undocumented, but what app.hyperliquid.xyz/earn itself calls */
-  const [resv,lend,dsum,dels,vaults,subs,vals,drew]=await Promise.all([
-    post({type:'allBorrowLendReserveStates'}).catch(()=>null),
+async function scan(addr){
+  say('Reading balances…','i');
+  const [sm,pm,mids,dexs,spot,core,res,bl,stk,vlt,pf,subs,oo,fees,wd2,agents,predF]=await Promise.all([
+    post({type:'spotMetaAndAssetCtxs'}),
+    post({type:'metaAndAssetCtxs'}),
+    post({type:'allMids'}),
+    post({type:'perpDexs'}).catch(()=>[null]),
+    post({type:'spotClearinghouseState',user:addr}),
+    post({type:'clearinghouseState',user:addr}),
+    post({type:'allBorrowLendReserveStates'}).catch(()=>[]),
     post({type:'borrowLendUserState',user:addr}).catch(()=>null),
     post({type:'delegatorSummary',user:addr}).catch(()=>null),
-    post({type:'delegations',user:addr}).catch(()=>null),
-    post({type:'userVaultEquities',user:addr}).catch(()=>null),
+    post({type:'userVaultEquities',user:addr}).catch(()=>[]),
+    post({type:'portfolio',user:addr}).catch(()=>[]),
     post({type:'subAccounts',user:addr}).catch(()=>null),
-    post({type:'validatorSummaries'}).catch(()=>null),
-    post({type:'delegatorRewards',user:addr}).catch(()=>null)]);
-  /* every builder-deployed perp DEX is a separate margin account — scan them all */
-  const dexNames=(dexList||[null]).map(d=>d&&d.name?d.name:'').filter(n=>n!=='');
-  const dexStates=await Promise.all(dexNames.map(n=>
-    post({type:'clearinghouseState',user:addr,dex:n}).catch(()=>null)));
-  const books=[{dex:'',label:'Core',st:ps,ctx:mac}];
-  const liveDex=[];
-  dexNames.forEach((n,i)=>{const st=dexStates[i];
-    if(st&&st.marginSummary&&(+st.marginSummary.accountValue>0.01||
-      (st.assetPositions||[]).some(a=>Math.abs(+a.position.szi)>0))) liveDex.push({n,st});});
-  const dexCtx=await Promise.all(liveDex.map(d=>post({type:'metaAndAssetCtxs',dex:d.n}).catch(()=>null)));
-  liveDex.forEach((d,i)=>books.push({dex:d.n,label:d.n.toUpperCase(),st:d.st,ctx:dexCtx[i]}));
-  const tok={};(sm.tokens||[]).forEach(t=>tok[t.index]=t.name);
-  const RES={},LEND={};
-  (resv||[]).forEach(([i,v])=>{if(tok[i])RES[tok[i]]={borrowApy:+v.borrowYearlyRate,supplyApy:+v.supplyYearlyRate,
-    util:+v.utilization,supplied:+v.totalSupplied,borrowed:+v.totalBorrowed,ltv:+v.ltv,oracle:+v.oraclePx};});
-  ((lend&&lend.tokenToState)||[]).forEach(([i,v])=>{if(tok[i])LEND[tok[i]]={
-    bBasis:+v.borrow.basis,bValue:+v.borrow.value,sBasis:+v.supply.basis,sValue:+v.supply.value};});
-  const pair={},pairOf={};
-  (sm.universe||[]).forEach(p=>{const a=tok[p.tokens[0]],b=tok[p.tokens[1]];
-    if(b==='USDC'&&a&&!pair[a]){pair[a]=p.name;pairOf[p.name]=a;}});
-  const ctx={};books.forEach(bk=>{if(bk.ctx&&bk.ctx[0])bk.ctx[0].universe.forEach((a,i)=>ctx[a.name]=bk.ctx[1][i]);});
-  const mid=c=>parseFloat(mids[c]||0)||0;
-  const spotPx=t=>t==='USDC'?1:(pair[t]?mid(pair[t]):0);
+    post({type:'frontendOpenOrders',user:addr}).catch(()=>[]),
+    post({type:'userFees',user:addr}).catch(()=>null),
+    post({type:'webData2',user:addr}).catch(()=>null),
+    post({type:'extraAgents',user:addr}).catch(()=>[]),
+    post({type:'predictedFundings'}).catch(()=>[])
+  ]);
 
-  /* --- replay fills --- */
-  const byCoin={};fills.forEach(f=>{(byCoin[f.coin]=byCoin[f.coin]||[]).push(f);});
-  Object.values(byCoin).forEach(a=>a.sort((x,y)=>x.time-y.time));
-  const openedAt={},spotBook={};
-  for(const c in byCoin){
-    if(c.startsWith('@')||c.includes('/')){
-      let q=0,cost=0,real=0,t0=null,fee=0;
-      for(const z of byCoin[c]){const s=+z.sz,p=+z.px,fe=+z.fee,ft=z.feeToken;
-        if(z.side==='B'){ if(q<=1e-9)t0=z.time;
-          cost+=s*p+(ft==='USDC'?fe:0); q+=s-(ft==='USDC'?0:fe); fee+=ft==='USDC'?fe:fe*p;}
-        else{const av=q>1e-12?cost/q:0, sz=Math.min(s,q);
-          real+=s*p-av*sz-(ft==='USDC'?fe:0); fee+=ft==='USDC'?fe:fe*p; cost-=av*sz; q-=s;
-          if(q<=1e-9){q=Math.max(0,q);cost=0;t0=null;}}}
-      spotBook[c]={qty:q,cost,avg:q>1e-12?cost/q:0,real,fee,t0,n:byCoin[c].length};
-    }else{
-      let pos=0,t0=null;
-      for(const z of byCoin[c]){const s=+z.sz*(z.side==='B'?1:-1);
-        if(Math.abs(pos)<1e-9&&Math.abs(s)>1e-12)t0=z.time; pos+=s; if(Math.abs(pos)<1e-9)t0=null;}
-      openedAt[c]=t0;
-    }
-  }
+  /* prices keyed by token index, to avoid ticker collisions */
+  const [sMeta,sCtx]=sm;
+  const TOK={}; sMeta.tokens.forEach(t=>TOK[t.index]=t);
+  const CTX={}; (sCtx||[]).forEach(x=>{if(x&&x.coin)CTX[x.coin]=x;});
+  const px_of=nm=>{const m=n(mids&&mids[nm]); if(m>0)return m; const c=CTX[nm]; return c?n(c.midPx||c.markPx):0;};
+  const PXI={}, BEST={};
+  sMeta.universe.forEach(u=>{
+    const bi=u.tokens[0], quote=TOK[u.tokens[1]];
+    if(!quote||quote.name!=='USDC') return;
+    const p=px_of(u.name); if(!(p>0)) return;
+    const score=(u.isCanonical?1e18:0)+n((CTX[u.name]||{}).dayNtlVlm);
+    if(BEST[bi]==null||score>BEST[bi]){BEST[bi]=score;PXI[bi]=p;}
+  });
+  PXI[0]=1;
 
-  /* --- perps: every DEX, plus every sub-account (their state ships inside subAccounts) --- */
-  const perpOpen=[];
+  const [pMeta,pCtx]=pm;
+  const MARK={},FUND={};
+  pMeta.universe.forEach((u,i)=>{MARK[u.name]=n(pCtx[i]&&pCtx[i].markPx)||n(mids&&mids[u.name]);FUND[u.name]=n(pCtx[i]&&pCtx[i].funding);});
+
+  say('Reading perpetual books…','i');
+  const names=(dexs||[]).filter(Boolean).map(d=>d.name);
+  const [sts,metas]=await Promise.all([
+    Promise.all(names.map(dx=>post({type:'clearinghouseState',user:addr,dex:dx}).then(st=>({dex:dx,st:st})).catch(()=>null))),
+    Promise.all(names.map(dx=>post({type:'metaAndAssetCtxs',dex:dx}).catch(()=>null)))
+  ]);
+  metas.forEach(mm=>{if(!mm)return;const [mu,mc]=mm;
+    (mu.universe||[]).forEach((u,i)=>{MARK[u.name]=n(mc[i]&&mc[i].markPx);FUND[u.name]=n(mc[i]&&mc[i].funding);});});
+
+  const books=[{dex:'core',st:core}];
+  let dexAv=0;
+  sts.forEach(e=>{ if(!e||!e.st)return;
+    const av=n(e.st.marginSummary&&e.st.marginSummary.accountValue);
+    dexAv+=av;
+    if(av>0.01||(e.st.assetPositions||[]).some(a=>Math.abs(n(a.position.szi))>0)) books.push({dex:e.dex,st:e.st});});
+
+  const perps=[];
   books.forEach(bk=>(bk.st.assetPositions||[]).forEach(a=>{
-    if(Math.abs(+a.position.szi)>0) perpOpen.push(Object.assign({},a.position,{_dex:bk.dex,_lab:bk.label}));}));
-  (subs||[]).forEach(x=>{const cs=x.clearinghouseState||{};
-    (cs.assetPositions||[]).forEach(a=>{ if(Math.abs(+a.position.szi)>0)
-      perpOpen.push(Object.assign({},a.position,{_dex:'',_lab:(x.name||'sub'),_sub:x.subAccountUser}));});});
-  const oldest=perpOpen.map(q=>openedAt[q.coin]).filter(Boolean);
-  const fStart=oldest.length?Math.min(...oldest):Date.now()-30*864e5;
-  const fundRaw=perpOpen.length?await post({type:'userFunding',user:addr,startTime:fStart}):[];
-  const funding=(fundRaw||[]).map(z=>({t:z.time,coin:z.delta.coin,usdc:+z.delta.usdc,
-    rate:+z.delta.fundingRate,sz:+z.delta.szi})).sort((a,b)=>b.t-a.t);
+    const p=a.position, sz=n(p.szi); if(!sz)return;
+    const mk=MARK[p.coin]||n(p.positionValue)/Math.abs(sz);
+    perps.push({coin:p.coin,base:p.coin.indexOf(':')>0?p.coin.split(':')[1]:p.coin,dex:bk.dex,
+      sz:sz,entry:n(p.entryPx),mark:mk,ntl:n(p.positionValue),upnl:n(p.unrealizedPnl),
+      liq:n(p.liquidationPx),fSince:n(p.cumFunding&&p.cumFunding.sinceOpen),
+      fRate:FUND[p.coin]||0,lev:p.leverage&&p.leverage.value,maxLev:n(p.maxLeverage)||10,acc:'main'});
+  }));
 
-  const perps=perpOpen.map(q=>{
-    const c=ctx[q.coin]||{},sz=+q.szi,mark=Math.abs(+q.positionValue/sz),t0=q._sub?null:(openedAt[q.coin]||null);
-    const fu=funding.filter(z=>z.coin===q.coin&&(!t0||z.t>=t0));
-    return {coin:q.coin,dex:q._dex,dexLab:q._lab,sub:q._sub||null,sz,side:sz<0?'short':'long',entry:+q.entryPx,mark,
-      notional:Math.abs(+q.positionValue),upnl:+q.unrealizedPnl,roe:+q.returnOnEquity,
-      lev:q.leverage?q.leverage.value:null,levType:q.leverage?q.leverage.type:'',
-      maxLev:q.maxLeverage,liq:q.liquidationPx?+q.liquidationPx:null,margin:+q.marginUsed,
-      cumF:-(+q.cumFunding.sinceOpen),cumFAll:-(+q.cumFunding.allTime),fN:fu.length,
-      fRate:c.funding?+c.funding:0,oi:c.openInterest?+c.openInterest:0,
-      oracle:c.oraclePx?+c.oraclePx:null,t0};});
+  const RES={}; (res||[]).forEach(r=>{const t=TOK[r[0]]; if(t)RES[t.name]=r[1];});
 
-  /* --- spot --- */
-  const rows=[],dust=[];let dustV=0;
-  for(const b of (ss.balances||[])){
-    const t=b.coin,tot=+b.total,bor=+(b.borrowed||0),sup=+(b.supplied||0),px=spotPx(t),val=tot*px;
-    const st=!!STABLE[t], bk=st?null:(spotBook[pair[t]]||null);
-    const matched=bk&&tot>0?Math.abs(bk.qty-tot)/tot<0.02:false;
-    const rs=RES[t]||null, ln=LEND[t]||null;
-    const r={coin:t,qty:tot,px,val,sup,bor,ltv:+(b.ltv||0),stable:st,
-      borrowApy:rs?rs.borrowApy:null,supplyApy:rs?rs.supplyApy:null,util:rs?rs.util:null,
-      poolSupplied:rs?rs.supplied:null,poolBorrowed:rs?rs.borrowed:null,
-      intPaid:ln?ln.bValue-ln.bBasis:null,intEarned:ln?ln.sValue-ln.sBasis:null,
-      avg:bk?bk.avg:0,real:bk?bk.real:0,fee:bk?bk.fee:0,t0:bk?bk.t0:null,matched,
-      upnl:bk&&matched?tot*(px-bk.avg):null};
-    if(Math.abs(val)>=MIN||bor>=MIN) rows.push(r); else if(Math.abs(val)>1e-6){dust.push(r);dustV+=val;}
+  let borrowed=0,hf=null,health='';
+  if(bl&&bl.tokenToState){
+    (bl.tokenToState||[]).forEach(x=>{borrowed+=n(x[1].borrow&&x[1].borrow.value);});
+    hf=bl.healthFactor?n(bl.healthFactor):null; health=bl.health||'';
   }
-  rows.sort((a,b)=>Math.abs(b.val)-Math.abs(a.val));
 
-  const P={};(pf||[]).forEach(([k,v])=>P[k]={av:(v.accountValueHistory||[]).map(z=>[z[0],+z[1]]),
-    pnl:(v.pnlHistory||[]).map(z=>[z[0],+z[1]]),vlm:+v.vlm});
+  const STABLE=c=>/^(USDC|USDT0|USDH|USDE|USDT)$/.test(c);
+  const bals=[];
+  (spot.balances||[]).forEach(b=>{
+    const ti=b.token!=null?b.token:-1, tot=n(b.total);
+    let px=PXI[ti]; if(!(px>0)) px=RES[b.coin]?n(RES[b.coin].oraclePx):0;
+    const val=tot*px, bor=n(b.borrowed);
+    if(Math.abs(val)<1&&bor<1) return;
+    bals.push({coin:b.coin,ti:ti,qty:tot,px:px,val:val,sup:n(b.supplied),bor:bor,acc:'main',
+      ltv:RES[b.coin]?n(RES[b.coin].ltv):0,
+      oracle:RES[b.coin]?n(RES[b.coin].oraclePx):px});
+  });
 
-  /* collateral credit exactly as the exchange values it: supplied only, at the borrow oracle,
-     haircut 0.5 + 0.5*LTV, stablecoins at face. Verified against availableAfterMaintenance. */
   let credit=0;
-  for(const b of (ss.balances||[])){const t=b.coin,sup=+(b.supplied||0);if(!(sup>0))continue;
-    const px=(RES[t]&&RES[t].oracle)||(STABLE[t]?1:spotPx(t)), lv=+(b.ltv||0);
-    credit += sup*px*(STABLE[t]?1:0.5+0.5*lv);}
-  const aam=+(((ss.tokenToAvailableAfterMaintenance||[]).find(z=>String(z[0])==='0')||[0,0])[1]);
+  bals.forEach(b=>{ if(!(b.sup>0))return;
+    const px=b.oracle||b.px, th=STABLE(b.coin)?1:(0.5+0.5*b.ltv);
+    b.credit=b.sup*px*th; credit+=b.credit;});
 
-  /* staked HYPE, vault deposits and sub-accounts live outside both clearinghouses */
-  const hypePx=spotPx('HYPE')||0;
-  const vName={};(vals||[]).forEach(v=>vName[v.validator]=v.name||v.validator.slice(0,10));
-  const stk={
-    delegated:+((dsum||{}).delegated||0), undelegated:+((dsum||{}).undelegated||0),
-    pending:+((dsum||{}).totalPendingWithdrawal||0), nPending:+((dsum||{}).nPendingWithdrawals||0),
-    px:hypePx,
-    vals:(dels||[]).map(d=>({addr:d.validator,name:vName[d.validator]||d.validator.slice(0,10)+'…',
-      amt:+d.amount,lock:d.lockedUntilTimestamp})).sort((a,b)=>b.amt-a.amt),
-    r1:0,r30:0};
-  stk.total=stk.delegated+stk.undelegated+stk.pending;
-  stk.value=stk.total*hypePx;
-  if(drew&&drew.length){const now=Date.now();
-    stk.r1=drew.filter(z=>z.time>now-864e5).reduce((a,z)=>a+ +z.totalAmount,0);
-    stk.r30=drew.filter(z=>z.time>now-30*864e5).reduce((a,z)=>a+ +z.totalAmount,0);}
-  const vlt=(vaults||[]).map(v=>({addr:v.vaultAddress,eq:+v.equity,lock:v.lockedUntilTimestamp}))
-    .filter(v=>v.eq>=MIN).sort((a,b)=>b.eq-a.eq);
-  const vltTotal=vlt.reduce((a,v)=>a+v.eq,0);
-  const sub=(subs||[]).map(x=>{const cs=x.clearinghouseState||{};
-      const sv=(((x.spotState||{}).balances)||[]).reduce((a,b)=>{const px=spotPx(b.coin);return a+ +b.total*px;},0);
-      return {name:x.name||'—',addr:x.subAccountUser,
-        perp:+((cs.marginSummary||{}).accountValue||0),spot:sv,
-        n:(cs.assetPositions||[]).filter(a=>Math.abs(+a.position.szi)>0).length};})
-    .map(x=>Object.assign(x,{tot:x.perp+x.spot}))
-    .filter(x=>x.tot>=MIN).sort((a,b)=>b.tot-a.tot);
-  const subTotal=sub.reduce((a,x)=>a+x.tot,0);
+  const P={}; (pf||[]).forEach(x=>{P[x[0]]=x[1];});
+  const has=P.allTime&&P.allTime.accountValueHistory&&P.allTime.accountValueHistory.length;
+  const eqTotal=has?last(P.allTime.accountValueHistory):0;
+  const eqPerp=(P.perpAllTime&&P.perpAllTime.accountValueHistory)?last(P.perpAllTime.accountValueHistory):0;
+  const eqSpot=eqTotal-eqPerp;
 
-  const spotVal=rows.reduce((a,r)=>a+Math.max(0,r.val),0)+dust.reduce((a,r)=>a+Math.max(0,r.val),0);
-  const borrowed=(ss.balances||[]).reduce((a,b)=>a+ +(b.borrowed||0),0);
-  return {addr,t:Date.now(),perps,rows,dust,dustV,P,funding:funding.slice(0,40),
-    ms:{av:+ps.marginSummary.accountValue,ntl:+ps.marginSummary.totalNtlPos,
-        raw:+ps.marginSummary.totalRawUsd,used:+ps.marginSummary.totalMarginUsed,
-        wd:+ps.withdrawable,mm:+ps.crossMaintenanceMarginUsed},
-    dexAccts:books.map(bk=>({dex:bk.dex,label:bk.label,
-      av:+bk.st.marginSummary.accountValue,ntl:+bk.st.marginSummary.totalNtlPos,
-      used:+bk.st.marginSummary.totalMarginUsed,mm:+(bk.st.crossMaintenanceMarginUsed||0),
-      wd:+(bk.st.withdrawable||0),
-      n:(bk.st.assetPositions||[]).filter(a=>Math.abs(+a.position.szi)>0).length})),
-    dexScanned:1+dexNames.length,
-    pmRatio:+(ss.portfolioMarginRatio||0),pm:!!ss.portfolioMarginEnabled,
-    spotVal,borrowed,nFills:fills.length,
-    res:RES,health:lend?lend.health:null,hf:lend?+lend.healthFactor:null,credit,aam,
-    stk,vlt,vltTotal,sub,subTotal,
-    exAv:(P.allTime&&P.allTime.av.length)?P.allTime.av[P.allTime.av.length-1][1]:null,
-    fillsFrom:fills.length?Math.min(...fills.map(f=>f.time)):null};
+  /* Under portfolio margin the USDC balance returned by the spot endpoint
+     already contains the margin held in the perpetual books. Adding it to
+     perpetual equity would double count, so spot USDC is backed out of the
+     reported spot equity instead. */
+  const nonUsdc=bals.filter(b=>b.coin!=='USDC').reduce((a,b)=>a+b.val,0);
+  const stkV0=stk?(n(stk.delegated)+n(stk.undelegated)+n(stk.totalPendingWithdrawal))*(PXI[150]||0):0;
+  const vltV0=(vlt||[]).reduce((a,v)=>a+n(v.equity),0);
+  const u=bals.find(b=>b.coin==='USDC');
+  let unified=false, usdcSpot=u?u.qty:0;
+  if(u&&has){
+    const resid=eqSpot-stkV0-vltV0-nonUsdc;              /* USDC implied by reported equity */
+    usdcSpot=Math.min(u.qty,Math.max(0,resid));
+    unified=Math.abs(u.qty-usdcSpot)>Math.max(1,Math.abs(u.qty)*0.02);
+    u.val=usdcSpot; u.qty=usdcSpot;
+  }
+  const spotVal=nonUsdc+usdcSpot;
+  bals.sort((a,b)=>b.val-a.val);
+
+  /* ---- vaults: resolve each position to its vault ---- */
+  const VAULTS=await Promise.all((vlt||[]).filter(v=>n(v.equity)>0).map(v=>
+    post({type:'vaultDetails',vaultAddress:v.vaultAddress,user:addr})
+      .then(d=>({eq:n(v.equity),lock:+v.lockedUntilTimestamp,addr:v.vaultAddress,d:d}))
+      .catch(()=>({eq:n(v.equity),lock:+v.lockedUntilTimestamp,addr:v.vaultAddress,d:null}))));
+
+  /* ---- cross-venue predicted funding ---- */
+  const PFUND={}; (predF||[]).forEach(x=>{ if(Array.isArray(x)&&x[0]) PFUND[x[0]]=x[1]; });
+
+  /* ---- accounts: master plus sub-accounts (sub state ships inside the response) ---- */
+  const ACC=[{id:'main',name:'Master account',addr:addr,i:0,pm:true,
+    wd:n(core.withdrawable),used:n((core.marginSummary||{}).totalMarginUsed)}];
+  (subs||[]).forEach((sa,i)=>{
+    const cs=sa.clearinghouseState||{}, m2=cs.marginSummary||{};
+    const id='s'+i;
+    ACC.push({id:id,name:sa.name||('sub'+(i+1)),addr:sa.subAccountUser||'',i:i+1,pm:false,
+      av:n(m2.accountValue),raw:n(m2.totalRawUsd),mm:n(cs.crossMaintenanceMarginUsed),
+      wd:n(cs.withdrawable),used:n(m2.totalMarginUsed)});
+    (cs.assetPositions||[]).forEach(a=>{
+      const p=a.position, sz=n(p.szi); if(!sz)return;
+      const mk=MARK[p.coin]||n(p.positionValue)/Math.abs(sz);
+      perps.push({coin:p.coin,base:p.coin.indexOf(':')>0?p.coin.split(':')[1]:p.coin,dex:'core',
+        sz:sz,entry:n(p.entryPx),mark:mk,ntl:n(p.positionValue),upnl:n(p.unrealizedPnl),
+        liq:n(p.liquidationPx),fSince:n(p.cumFunding&&p.cumFunding.sinceOpen),
+        fRate:FUND[p.coin]||0,lev:p.leverage&&p.leverage.value,maxLev:n(p.maxLeverage)||10,acc:id});
+    });
+    (((sa.spotState||{}).balances)||[]).forEach(b=>{
+      const ti=b.token!=null?b.token:-1, tot=n(b.total);
+      let px=PXI[ti]; if(!(px>0)) px=RES[b.coin]?n(RES[b.coin].oraclePx):0;
+      const val=tot*px; if(Math.abs(val)<1) return;
+      bals.push({coin:b.coin,ti:ti,qty:tot,px:px,val:val,sup:0,bor:0,acc:id,ltv:0,oracle:px});
+    });
+  });
+  /* per-sub performance: one request each, so only when the count stays sane */
+  const SUBPF_CAP=20;
+  const subList=ACC.filter(a=>a.i>0);
+  let subPfOk=false;
+  if(subList.length>0&&subList.length<=SUBPF_CAP){
+    say('Reading sub-account performance…','i');
+    const pfs=await Promise.all(subList.map(a=>post({type:'portfolio',user:a.addr}).catch(()=>null)));
+    subPfOk=true;
+    pfs.forEach((p,i)=>{
+      const M={}; (p||[]).forEach(x=>{M[x[0]]=x[1];});
+      const a=subList[i];
+      const pk=k=>'perp'+(k==='allTime'?'AllTime':k.charAt(0).toUpperCase()+k.slice(1));
+      a.pf=['day','week','month','allTime'].map(k=>({
+        pnl:M[k]&&M[k].pnlHistory?last(M[k].pnlHistory):0,
+        vlm:M[k]?n(M[k].vlm):0,
+        ppnl:M[pk(k)]&&M[pk(k)].pnlHistory?last(M[pk(k)].pnlHistory):0,
+        pvlm:M[pk(k)]?n(M[pk(k)].vlm):0}));
+    });
+  }
+  const subEqPerp=ACC.filter(a=>a.i>0).reduce((x,a)=>x+a.av,0);
+  const subEqSpot=bals.filter(b=>b.acc!=='main').reduce((x,b)=>x+b.val,0);
+
+  const ms=core.marginSummary||{};
+  const av=n(ms.accountValue), mm=n(core.crossMaintenanceMarginUsed), raw=n(ms.totalRawUsd);
+  const LV=credit+(av-borrowed);
+  const aamArr=(core.tokenToAvailableAfterMaintenance||[]).find(z=>String(z[0])==='0');
+  const cap=k=>k==='allTime'?'AllTime':k.charAt(0).toUpperCase()+k.slice(1);
+  const per=['day','week','month','allTime'].map(k=>{const pk='perp'+cap(k);return{k:k,
+    pnl:P[k]&&P[k].pnlHistory?last(P[k].pnlHistory):0, vlm:P[k]?n(P[k].vlm):0,
+    ppnl:P[pk]&&P[pk].pnlHistory?last(P[pk].pnlHistory):0, pvlm:P[pk]?n(P[pk].vlm):0};});
+
+  D={addr:addr,spot:bals,perps:perps,RES:RES,STABLE:STABLE,
+     borrowed:borrowed,hf:hf,health:health,credit:credit,LV:LV,av:av,avDex:dexAv,mm:mm,raw:raw,
+     aam:aamArr?n(aamArr[1]):null,
+     eqTotal:eqTotal,eqPerp:eqPerp,eqSpot:spotVal,hasPf:!!has,unified:unified,
+     ACC:ACC,subEqPerp:subEqPerp,subEqSpot:subEqSpot,nSub:ACC.length-1,subPfOk:subPfOk,
+     mUpnl:perps.filter(p=>p.acc==='main').reduce((a,p)=>a+p.upnl,0),
+     withdraw:n(core.withdrawable),
+     mNtl:perps.filter(p=>p.acc==='main').reduce((a,p)=>a+Math.abs(p.ntl),0),
+     per:per,P:P,stk:stk,vlt:vlt||[],
+     vltV:(vlt||[]).reduce((a,v)=>a+n(v.equity),0),
+     stkQ:stk?(n(stk.delegated)+n(stk.undelegated)+n(stk.totalPendingWithdrawal)):0,
+     stkV:stkV0, vltVal:vltV0,
+     hypePx:PXI[150]||0, books:books.map(b=>b.dex), t:Date.now(),
+     oo:(oo||[]), fees:fees, agents:(agents||[]), VAULTS:VAULTS, PFUND:PFUND,
+     pmFlag:!!(wd2&&wd2.spotState&&wd2.spotState.portfolioMarginEnabled),
+     cumLedger:wd2?n(wd2.cumLedger):null,
+     agentAddress:wd2?wd2.agentAddress:null, agentUntil:wd2?wd2.agentValidUntil:null,
+     oiCap:(wd2&&wd2.perpsAtOpenInterestCap)||[]};
 }
 
-/* ---- what interest alone can do to this account ----
-   Liquidation fires when  (20 + maintenance_margin) / liquidation_value > 0.95.
-   Debt sits in the liquidation value dollar-for-dollar, so availableAfterMaintenance
-   falls by exactly one dollar per dollar of interest capitalised. That gives an
-   interest budget, and a compounding debt turns the budget into a deadline. */
+/* ============================================================
+   Upside risk on a spot-collateralised short. Two distinct limits:
+     1. borrow capacity          -> LTV               (0.65 for HYPE)
+     2. portfolio-margin wipeout -> 0.5 + 0.5 x LTV   (0.825 for HYPE)
+   Core book only: HIP-3 venues are separate margin accounts.
+   Other positions are held at their current mark.
+   ============================================================ */
+/* account colour: 12 separated hues, three tonal cycles, legible on both themes */
+const HUES=[14,34,52,86,140,168,190,212,246,272,300,330];
+function accColor(i){
+  if(i===0) return 'var(--acc)';
+  const j=i-1, h=HUES[j%HUES.length], c=Math.floor(j/HUES.length)%3;
+  return 'hsl('+h+' '+[62,54,72][c]+'% '+[47,63,35][c]+'%)';
+}
+const accOf=id=>D.ACC.find(a=>a.id===id)||D.ACC[0];
+function accChip(id,plain){
+  const a=accOf(id);
+  return '<span class="accchip'+(plain?'':' clik')+'"'+(plain?'':' onclick="pickAcc(\''+id+'\')" title="Click to filter on this account"')
+    +'><i style="background:'+accColor(a.i)+'"></i>'+a.name+'</span>';
+}
+function pickAcc(id){
+  ACCF=(ACCF===id)?'':id;
+  const sel=$('accSel'); if(sel) sel.value=ACCF;
+  renderAccounts(); renderSpot(); renderPerps(); renderDelta(); syncFilterUI();
+}
+window.pickAcc=pickAcc;
+function syncFilterUI(){
+  const c=$('accClear');
+  if(!c) return;
+  if(ACCF){c.classList.remove('hide');c.innerHTML='Filtering: '+accChip(ACCF,true)+' <b>×</b>';}
+  else c.classList.add('hide');
+  document.querySelectorAll('#accT tr[data-acc]').forEach(tr=>
+    tr.classList.toggle('sel',!!ACCF&&tr.dataset.acc===ACCF));
+}
+let ACCF='';                                   /* account filter, '' = all */
+let SHOWEMPTY=false;                           /* list dust sub-accounts */
+const inFilter=x=>!ACCF||x.acc===ACCF;
+
 const MBO=20, TRIG=0.95;
-function rateAt(u){return 0.05+4.75*Math.max(0,u-0.8);}
-function risk(){
-  if(!D||!(D.borrowed>0)) return null;
-  const bRows=D.rows.filter(r=>r.bor>0);
-  const wRate=bRows.reduce((a,r)=>a+r.bor*(r.borrowApy||0),0)/D.borrowed;
-  const util=bRows.length?(bRows[0].util||0):0;
-  const floor=(MBO+TRIG*D.ms.mm)/TRIG-D.ms.mm;      /* aam at which the trigger fires */
-  const budget=D.aam-floor;                          /* dollars of interest still absorbable */
-  const yrs=r=>(budget<=0||r<=0)?0:Math.log(1+budget/D.borrowed)/r;
-  /* funding the book earns per year, signed: a short is paid when the rate is positive */
-  const fund=D.perps.reduce((a,p)=>a-p.sz*p.mark*p.fRate*8760,0);
-  const cost=D.borrowed*wRate;
-  const rStar=fund>0?fund/D.borrowed:0;              /* rate at which the carry breaks even */
-  const uStar=rStar>0.05?0.8+(rStar-0.05)/4.75:(rStar>0?0:null);
-  const t=yrs(wRate);
-  let lvl='safe',why=[];
-  if(budget<=0){lvl='danger';why.push('the interest budget is already spent');}
-  else{
-    if(util>=0.80){lvl='danger';why.push('the pool is past 80% used, where the rate escalates 4.75 points per point');}
-    else if(util>=0.72){lvl='watch';why.push('the pool is close to the 80% break');}
-    if(t<0.5){lvl='danger';why.push('interest alone reaches the trigger inside six months');}
-    else if(t<3&&lvl!=='danger'){lvl='watch';why.push('interest alone reaches the trigger inside three years');}
-    if(cost>fund&&lvl==='safe'){lvl='watch';why.push('interest already costs more than the funding the book earns');}
+function upside(coin){
+  const b=D.spot.find(x=>x.coin===coin&&x.acc==='main');
+  if(!b||!(b.sup>0)||!(b.ltv>0)) return null;
+  const core=D.perps.filter(p=>p.dex==='core'&&p.acc==='main');
+  const mine=core.filter(p=>p.base===coin);
+  const Z=-mine.reduce((a,p)=>a+p.sz,0);
+  const S=b.sup, ltv=b.ltv, th=0.5+0.5*ltv;
+  const maxLev=mine.length?mine[0].maxLev:10, mmf=1/(2*maxLev);
+  const k=1+mmf*(1+0.05/TRIG);
+  const r={coin:coin,S:S,Z:Z,ltv:ltv,th:th,mmf:mmf,k:k,px:b.px,
+    capShort:ltv*S, neutralShort:th*S/k,
+    ratio:S>0?Z/S:0, pxCap:Infinity, pxPM:Infinity,
+    coefCap:0, coefPM:0, constCap:0, constPM:0};
+  if(!(Z>0)) return r;
+  const K=D.raw+core.filter(p=>p.base!==coin).reduce((a,p)=>a+p.sz*p.mark,0);
+  const mmOther=Math.max(0,D.mm-mmf*Z*b.px);
+  const creditOther=Math.max(0,D.credit-S*(b.oracle||b.px)*th);
+  const M=D.spot.filter(x=>x.acc==='main');
+  const capOther=M.reduce((a,x)=>a+((x.coin!==coin&&x.sup>0&&x.ltv>0)?x.sup*(x.oracle||x.px)*x.ltv:0),0);
+  const stable=M.reduce((a,x)=>a+(D.STABLE(x.coin)?x.val:0),0);
+  r.coefCap=Z-ltv*S; r.constCap=K+stable+capOther;
+  if(r.coefCap>0) r.pxCap=r.constCap/r.coefCap;
+  r.coefPM=th*S-Z*k;
+  r.constPM=creditOther+K-D.borrowed-mmOther-(MBO+0.05*mmOther)/TRIG;
+  if(r.coefPM<0&&r.constPM>0) r.pxPM=r.constPM/(-r.coefPM);
+  r.first=Math.min(r.pxCap,r.pxPM);
+  r.headroom=isFinite(r.first)?(r.first-r.px)/r.px:Infinity;
+  /* remediation */
+  r.cutToNeutral=Math.max(0,Z-r.neutralShort);
+  r.cutToCap=Math.max(0,Z-r.capShort);
+  r.addCollateral=Math.max(0,Z*k/th-S);
+  r.marginFor=t=>Math.max(
+    r.coefCap>0?t*r.coefCap-r.constCap:0,
+    r.coefPM<0?t*(-r.coefPM)-r.constPM:0);
+  return r;
+}
+
+/* ---------- risk banner ---------- */
+function renderBanner(){
+  const rs=D.perps.filter(p=>p.dex==='core'&&p.sz<0&&p.acc==='main')
+    .map(p=>upside(p.base)).filter(r=>r&&r.Z>0);
+  const B=$('banner');
+  const hfBad=D.borrowed>0&&D.hf!=null&&D.hf<1.5;
+  if(!rs.length&&!hfBad){
+    if(!D.perps.length){B.innerHTML='';return;}
+    B.innerHTML='<div class="alert ok"><div class="hd"><span class="dot"></span>No upside liquidation exposure</div>'
+      +'<div class="ttl">Collateral coverage is adequate</div>'
+      +'<div class="sub">No spot-collateralised short is running above its liquidation threshold. '
+      +'Positions are not at risk from a rise in the underlying.</div></div>';
+    return;
   }
-  return {wRate,util,floor,budget,t,fund,cost,rStar,uStar,lvl,why,
-    scen:[util,0.8,0.9,1.0].sort((a,b)=>a-b).map(u=>({u,r:rateAt(u),t:yrs(rateAt(u))}))};
+  rs.sort((a,b)=>a.headroom-b.headroom);
+  const w=rs[0];
+  const exposed=w&&isFinite(w.first);
+  let sev='ok', head='Within limits', ttl='', sub='';
+
+  if(exposed){
+    const h=w.headroom;
+    sev = h<=0?'crit' : h<0.5?'crit' : 'warn';
+    head = h<=0?'Threshold already breached' : h<0.5?'Immediate action required'
+         : h<2?'Action recommended' : 'Exposure flagged';
+    ttl = w.coin+' short is over-hedged at '+(w.ratio*100).toFixed(1)+'% of posted collateral';
+    sub = 'You are short <b>'+qty(w.Z,2)+' '+w.coin+'</b> against <b>'+qty(w.S,2)+'</b> supplied as collateral. '
+      +'Above <b>'+(w.neutralShort/w.S*100).toFixed(1)+'%</b> the liquidation value of the account <b>falls</b> as the price rises, '
+      +'so a rally — not a decline — is what liquidates this position. ';
+    sub += h<=0
+      ? 'On current marks the binding constraint sits at <b>'+usd(w.first,2)+'</b>, <b>below</b> the mark of '+usd(w.px,2)
+        +' — the position is at or past the liquidation threshold and should be reduced without delay.'
+      : 'The first constraint binds at <b>'+usd(w.first,2)+'</b>, '+pct(w.headroom,0)+' from the current mark of '+usd(w.px,2)+'.';
+  }else if(hfBad){
+    sev='crit'; head='Immediate action required';
+    ttl='Health factor at '+D.hf.toFixed(2);
+    sub='Outstanding borrow of '+usd(D.borrowed)+' against a weakening collateral base. Below 1.00 the loan is liquidated.';
+  }else{
+    sev='ok'; head='No upside liquidation exposure';
+    ttl='Collateral coverage is adequate';
+    sub='Every spot-collateralised short sits below its liquidation threshold. The liquidation value of the account rises with the price, '
+      +'so no rally can liquidate these positions.';
+  }
+
+  let boxes='';
+  if(exposed){
+    const bx=(l,v,s,c)=>'<div class="box"><div class="l">'+l+'</div><div class="v '+(c||'')+'">'+v+'</div><div class="s">'+s+'</div></div>';
+    boxes='<div class="grid">'
+      +bx('Current mark',usd(w.px,2),w.coin+' spot reference')
+      +bx('Borrow-capacity breach',isFinite(w.pxCap)?usd(w.pxCap,2):'None',isFinite(w.pxCap)?pct((w.pxCap-w.px)/w.px,0)+' from spot':'LTV limit never binds')
+      +bx('Portfolio-margin liquidation',isFinite(w.pxPM)?usd(w.pxPM,2):'None',isFinite(w.pxPM)?pct((w.pxPM-w.px)/w.px,0)+' from spot':'threshold never binds')
+      +bx('Hedge ratio',(w.ratio*100).toFixed(1)+'%','limit '+(w.neutralShort/w.S*100).toFixed(1)+'%',w.ratio>w.neutralShort/w.S?'neg':'pos')
+      +'</div>';
+  }
+
+  let act='';
+  if(exposed){
+    const t2=isFinite(w.first)?w.first*2:w.px*4, need2=Math.max(0,w.marginFor(t2));
+    act='<div class="act"><b>Remediation — any one of the following.</b><br>'
+      +'&nbsp;&nbsp;1. <b>Reduce the short by '+qty(w.cutToNeutral,2)+' '+w.coin+'</b> ('+usd(w.cutToNeutral*w.px)+' notional), '
+      +'taking the position to '+qty(w.neutralShort,2)+'. This removes upside liquidation risk outright — '
+      +'the account then gains liquidation value as the price rises.<br>'
+      +(w.cutToCap>0?'&nbsp;&nbsp;2. <b>Reduce the short by '+qty(w.cutToCap,2)+' '+w.coin+'</b> to '+qty(w.capShort,2)
+        +' to stay inside the '+(w.ltv*100).toFixed(0)+'% borrow limit as well, so no automatic borrowing is ever required.<br>':'')
+      +'&nbsp;&nbsp;'+(w.cutToCap>0?'3':'2')+'. <b>Post '+qty(w.addCollateral,2)+' more '+w.coin+'</b> as collateral to bring the ratio back under the threshold.<br>'
+      +((need2>0&&t2>w.px)?'&nbsp;&nbsp;'+(w.cutToCap>0?'4':'3')+'. <b>Post '+usd(need2)+' of stablecoin collateral</b> to move the first constraint out to '+usd(t2,2)+'. '
+        +'<span class="dim">This defers the constraint without removing it — only cutting the hedge ratio does that.</span>':'')
+      +'</div>';
+  }
+  B.innerHTML='<div class="alert '+sev+'"><div class="hd"><span class="dot"></span>'+head+'</div>'
+    +'<div class="ttl">'+ttl+'</div><div class="sub">'+sub+'</div>'+boxes+act+'</div>';
 }
 
-
-/* ---- how much more debt this book can carry ----
-   Liquidation fires at (20 + MM) / LV = 0.95, so LV may fall to (20+MM)/0.95 and no further.
-   Debt sits in LV dollar-for-dollar. Borrowing and holding the cash is neutral — it is spending
-   it that costs headroom, at $1 per dollar taken out, or 17.5 cents per dollar recycled into HYPE
-   (credited at 0.5 + 0.5*LTV instead of face). Everything else is stressed against price:
-   collateral credit scales with it, the perp legs move against it, maintenance margin follows
-   the notional. */
-function capacity(){
-  if(!D) return null;
-  const sup=D.rows.filter(r=>r.sup>0);
-  const creditAt=m=>sup.reduce((a,r)=>a+r.sup*r.px*(r.stable?1:m)*(r.stable?1:0.5+0.5*r.ltv),0);
-  const lendAt=m=>sup.reduce((a,r)=>a+(r.stable?0:r.sup*r.px*m*r.ltv),0);
-  const core=D.perps.filter(p=>!p.dex);
-  const pnlAt=m=>core.reduce((a,p)=>a+p.sz*p.mark*(m-1),0);   /* a short gains as the price falls */
-  /* debt at which the liquidation trigger fires, if the cash is spent rather than held */
-  const liqAt=m=>D.borrowed+creditAt(m)+D.ms.av+pnlAt(m)-D.borrowed-(MBO+D.ms.mm*m)/TRIG;
-  const coll=sup.filter(r=>!r.stable).reduce((a,r)=>a+r.sup*r.px,0);
-  const wLtv=coll>0?lendAt(1)/coll:0.65;
-  const lend=lendAt(1), liq=liqAt(1);
-  const extra=lend-D.borrowed;
-  const rate=(D.rows.filter(r=>r.bor>0)[0]||{borrowApy:0.05}).borrowApy;
-  return {coll,wLtv,lend,liq,extra,cushion:liq-lend,cost:Math.max(0,extra)*rate,rate,
-    debt:D.borrowed,
-    half:{lend:lendAt(0.5),extra:lendAt(0.5)-D.borrowed,liq:liqAt(0.5)},
-    binds: lend<liq ? 'lender' : 'liquidation'};
+/* ---------- vaults ---------- */
+function renderVaults(){
+  const C=$('vaultCard');
+  const V=D.VAULTS.filter(v=>v.eq>0);
+  if(!V.length){C.classList.add('hide');return;}
+  C.classList.remove('hide');
+  const now=Date.now();
+  let h='<tr><th>Vault</th><th>Your equity</th><th>Open P&L</th><th>All-time P&L</th><th>Vault APR</th>'
+       +'<th>Days following</th><th>Entered</th><th>Lock-up</th><th>Leader fee</th><th>Status</th></tr>';
+  V.forEach(v=>{
+    const d=v.d||{}, f=d.followerState||{};
+    const lock=+(f.lockupUntil||v.lock||0);
+    const locked=lock>now;
+    const days=Math.ceil((lock-now)/86400000);
+    h+='<tr><td><b>'+(d.name||v.addr.slice(0,10)+'…')+'</b>'
+      +(d.description?'<div class="dim" style="font-weight:400;font-size:11px">'+d.description+'</div>':'')
+      +'<div class="mono dim" style="font-size:11px">'+v.addr.slice(0,8)+'…'+v.addr.slice(-6)+'</div></td>'
+      +'<td><b>'+usd(n(f.vaultEquity)||v.eq,6)+'</b></td>'
+      +'<td class="'+cls(n(f.pnl))+'">'+sgn(n(f.pnl),6)+'</td>'
+      +'<td class="'+cls(n(f.allTimePnl))+'"><b>'+sgn(n(f.allTimePnl))+'</b></td>'
+      +'<td class="'+cls(d.apr)+'">'+(d.apr!=null?pct(d.apr,1):'—')+'</td>'
+      +'<td>'+(f.daysFollowing!=null?f.daysFollowing:'—')+'</td>'
+      +'<td class="dim">'+(f.vaultEntryTime?new Date(+f.vaultEntryTime).toLocaleDateString(L):'—')+'</td>'
+      +'<td class="'+(locked?'warn':'pos')+'">'+(lock?(locked?new Date(lock).toLocaleDateString(L)+' ('+days+'d)':'unlocked'):'—')+'</td>'
+      +'<td>'+(d.leaderCommission!=null?(d.leaderCommission*100).toFixed(0)+'%':'—')+'</td>'
+      +'<td>'+(d.isClosed?'<span class="neg">closed</span>':(d.allowDeposits?'<span class="pos">open</span>':'<span class="warn">deposits shut</span>'))+'</td></tr>';
+  });
+  const te=V.reduce((a,v)=>a+(n((v.d||{}).followerState&&v.d.followerState.vaultEquity)||v.eq),0);
+  h+='<tr><td class="dim">Total vault equity</td><td><b>'+usd(te,6)+'</b></td><td colspan="8"></td></tr>';
+  $('vaultT').innerHTML=h;
+  $('vaultN').innerHTML='Vault deposits are denominated in <b>USDC</b> — Hyperliquid vaults do not accept USDT. '
+    +'<b>Your equity</b> is your share of the vault marked to market; <b>open P&L</b> is the gain on the current deposit and '
+    +'<b>all-time P&L</b> includes everything already withdrawn. <b>Lock-up</b> is the date before which the position cannot be redeemed — '
+    +'deposits are locked for one day from entry, and the leader\'s own stake for longer. '
+    +'<b>Leader fee</b> is the performance fee taken on profit. Vault APR is the vault\'s own published return, not yours.';
 }
 
-/* ---------------- render ---------------- */
-function intCell(r){
-  if(r.bor>0) return (r.intPaid!=null? usd(-r.intPaid,6) : '—')
-    +'<div style="color:var(--ink3);font-size:10.5px">'+usd(-r.bor*(r.borrowApy||0)/365,4)+' /day</div>';
-  if(r.sup>0&&r.supplyApy>0) return (r.intEarned!=null? sgn(r.intEarned,6) : '—')
-    +'<div style="color:var(--ink3);font-size:10.5px">'+usd(r.sup*r.px*(r.supplyApy||0)/365,4)+' /day</div>';
-  return '—';
-}
-function rateCell(r){
-  if(r.bor>0) return nf((r.borrowApy||0)*100,2)+'% <span style="color:var(--ink3)">borrow</span>'
-    +'<div style="color:var(--ink3);font-size:10.5px">pool '+nf((r.util||0)*100,1)+'% used</div>';
-  if(r.sup>0&&r.supplyApy>0) return nf((r.supplyApy||0)*100,2)+'% <span style="color:var(--ink3)">supply</span>'
-    +'<div style="color:var(--ink3);font-size:10.5px">pool '+nf((r.util||0)*100,1)+'% used</div>';
-  if(r.sup>0) return '<span style="color:var(--ink3)">0.00% supply</span>'
-    +'<div style="color:var(--ink3);font-size:10.5px">no borrow demand for it</div>';
-  return '—';
+/* ---------- open orders ---------- */
+function renderOrders(){
+  const C=$('ordCard');
+  const O=D.oo.filter(o=>!ACCF||ACCF==='main');
+  if(!D.oo.length){C.classList.add('hide');return;}
+  C.classList.remove('hide');
+  const now=Date.now();
+  let h='<tr><th>Market</th><th>Side</th><th>Type</th><th>Size</th><th>Limit</th><th>Trigger</th><th>Notional</th>'
+       +'<th>Distance to mark</th><th>Flags</th><th>Placed</th></tr>';
+  const rows=O.slice().sort((a,b)=>{
+    const ca=(a.coin||''),cb=(b.coin||''); return ca<cb?-1:ca>cb?1:n(b.limitPx)-n(a.limitPx);});
+  if(!rows.length) h+='<tr><td colspan="10" class="dim">No resting order on this account.</td></tr>';
+  rows.forEach(o=>{
+    const px=n(o.limitPx), sz=n(o.sz), buy=o.side==='B';
+    const p=D.perps.find(x=>x.coin===o.coin);
+    const mk=p?p.mark:0;
+    const dist=mk>0?(px-mk)/mk:null;
+    const fl=[];
+    if(o.reduceOnly) fl.push('reduce-only');
+    if(o.isPositionTpsl) fl.push('position TP/SL');
+    if(o.tif&&o.tif!=='Gtc') fl.push(o.tif==='Alo'?'post-only':o.tif);
+    h+='<tr><td><b>'+o.coin+'</b></td>'
+      +'<td class="'+(buy?'pos':'neg')+'">'+(buy?'BUY':'SELL')+'</td>'
+      +'<td>'+(o.orderType||'Limit')+'</td>'
+      +'<td>'+qty(sz,6)+(n(o.origSz)>sz?' <span class="dim">of '+qty(n(o.origSz),6)+'</span>':'')+'</td>'
+      +'<td>'+usd(px,px<1?6:4)+'</td>'
+      +'<td>'+(o.isTrigger?usd(n(o.triggerPx),4)+' <span class="dim">'+(o.triggerCondition||'')+'</span>':'<span class="dim">—</span>')+'</td>'
+      +'<td>'+usd(sz*px)+'</td>'
+      +'<td class="'+(dist==null?'dim':Math.abs(dist)<0.01?'warn':'')+'">'+(dist==null?'—':pct(dist,2))+'</td>'
+      +'<td class="dim">'+(fl.length?fl.join(' · '):'—')+'</td>'
+      +'<td class="dim mono">'+new Date(+o.timestamp).toLocaleString(L,{month:'short',day:'2-digit',hour:'2-digit',minute:'2-digit'})+'</td></tr>';
+  });
+  const gross=rows.reduce((a,o)=>a+n(o.sz)*n(o.limitPx),0);
+  h+='<tr><td colspan="6" class="dim">'+rows.length+' resting order'+(rows.length>1?'s':'')+'</td><td><b>'+usd(gross)+'</b></td><td colspan="3"></td></tr>';
+  $('ordT').innerHTML=h;
+  $('ordN').innerHTML='Resting orders on the <b>master account</b> only — Hyperliquid exposes open orders per address, and pulling them for every '
+    +'sub-account would multiply the request count. <b>Distance to mark</b> flags orders within 1% of the current price, i.e. close to filling. '
+    +'<b>Notional</b> is size × limit price: the exposure that would be added if every order filled.';
 }
 
+/* ---------- accounts overview ---------- */
+function renderAccounts(){
+  const C=$('accCard');
+  if(D.nSub===0){C.classList.add('hide');$('accBar').classList.add('hide');return;}
+  C.classList.remove('hide');$('accBar').classList.remove('hide');
+
+  const rows=D.ACC.map(a=>{
+    const ps=D.perps.filter(p=>p.acc===a.id);
+    const sp=D.spot.filter(b=>b.acc===a.id);
+    const perpEq=a.i===0?(D.hasPf?D.eqPerp:D.av+D.avDex):a.av;
+    const spotV=a.i===0?D.eqSpot:sp.reduce((x,b)=>x+b.val,0);
+    const other=a.i===0?(D.stkV+D.vltVal):0;
+    const eq=a.i===0?(D.hasPf?D.eqTotal:perpEq+spotV+other):perpEq+spotV;
+    return {a:a,ps:ps,perpEq:perpEq,spotV:spotV,other:other,
+      mm:a.i===0?D.mm:a.mm, upnl:ps.reduce((x,p)=>x+p.upnl,0),
+      ntl:ps.reduce((x,p)=>x+Math.abs(p.ntl),0), eq:eq};
+  }).sort((x,y)=>y.eq-x.eq);
+
+  const tot=rows.reduce((x,r)=>x+r.eq,0);
+  const live=r=>r.a.i===0||r.eq>=1||r.ps.length>0;
+  const hidden=rows.filter(r=>!live(r)).length;
+  const shown=SHOWEMPTY?rows:rows.filter(live);
+  let h='<tr><th>Account</th><th>Total equity</th><th>Perpetuals</th><th>Spot</th><th>Staking + vaults</th>'
+       +'<th>Positions</th><th>Gross notional</th><th>Unrealised P&L</th>'
+       +(D.subPfOk?'<th>24h P&L</th>':'')+'<th>Maint. margin</th><th>Utilisation</th><th>Address</th></tr>';
+  shown.forEach(r=>{
+    const u=r.perpEq>0?r.mm/r.perpEq:0;
+    h+='<tr data-acc="'+r.a.id+'" class="clik'+(ACCF===r.a.id?' sel':'')+'" onclick="pickAcc(\''+r.a.id+'\')">'
+      +'<td><span class="accchip"><i style="background:'+accColor(r.a.i)+'"></i><b>'+r.a.name+'</b></span>'
+      +(r.a.i===0?'<span class="tag">master</span>':'')
+      +(r.a.i>0&&r.ps.length===0&&r.perpEq>1?'<span class="tag" title="collateral sitting in the perpetual account with no open position">idle margin</span>':'')+'</td>'
+      +'<td><b>'+usd(r.eq)+'</b> <span class="dim">('+(tot?(r.eq/tot*100).toFixed(1):'0.0')+'%)</span></td>'
+      +'<td'+(r.perpEq>0&&r.spotV<=0?' class="warn"':'')+'>'+usd(r.perpEq)+'</td><td>'+usd(r.spotV)+'</td>'
+      +'<td class="dim">'+(r.other>0?usd(r.other):'—')+'</td>'
+      +'<td>'+r.ps.length+'</td><td>'+usd(r.ntl,0)+'</td>'
+      +'<td class="'+cls(r.upnl)+'">'+sgn(r.upnl)+'</td>'
+      +(D.subPfOk?('<td class="'+cls(r.a.i===0?D.per[0].pnl:(r.a.pf?r.a.pf[0].pnl:0))+'">'
+        +sgn(r.a.i===0?D.per[0].pnl:(r.a.pf?r.a.pf[0].pnl:0))+'</td>'):'')
+      +'<td>'+usd(r.mm,0)+'</td>'
+      +'<td class="'+(u>0.66?'neg':u>0.4?'warn':'dim')+'">'+(u*100).toFixed(0)+'%</td>'
+      +'<td class="mono dim">'+(r.a.addr?r.a.addr.slice(0,6)+'…'+r.a.addr.slice(-4):'—')+'</td></tr>';
+  });
+  h+='<tr><td class="dim">Consolidated</td><td><b>'+usd(tot)+'</b></td>'
+    +'<td>'+usd(rows.reduce((x,r)=>x+r.perpEq,0))+'</td><td>'+usd(rows.reduce((x,r)=>x+r.spotV,0))+'</td>'
+    +'<td>'+usd(rows.reduce((x,r)=>x+r.other,0))+'</td>'
+    +'<td>'+D.perps.length+'</td><td>'+usd(rows.reduce((x,r)=>x+r.ntl,0),0)+'</td>'
+    +'<td class="'+cls(rows.reduce((x,r)=>x+r.upnl,0))+'">'+sgn(rows.reduce((x,r)=>x+r.upnl,0))+'</td>'
+    +(D.subPfOk?('<td class="'+cls(totals().pnl)+'">'+sgn(totals().pnl)+'</td>'):'')
+    +'<td>'+usd(rows.reduce((x,r)=>x+r.mm,0),0)+'</td><td></td><td></td></tr>';
+  $('accT').innerHTML=h;
+
+  const keep={}; rows.filter(live).forEach(r=>keep[r.a.id]=1);
+  const sel=$('accSel');
+  const key=D.addr+'|'+(SHOWEMPTY?1:0);
+  if(sel.dataset.k!==key){
+    sel.innerHTML='<option value="">All accounts</option>'
+      +D.ACC.filter(a=>SHOWEMPTY||keep[a.id]).map(a=>'<option value="'+a.id+'">'+a.name+'</option>').join('');
+    sel.dataset.k=key; sel.value=ACCF;
+  }
+  const tg=$('accToggle');
+  if(hidden>0){tg.classList.remove('hide');
+    tg.textContent=SHOWEMPTY?('Hide '+hidden+' empty sub-account'+(hidden>1?'s':'')):('Show '+hidden+' empty sub-account'+(hidden>1?'s':''));
+  }else tg.classList.add('hide');
+  $('accN').innerHTML='<b>Each sub-account is a self-contained margin account.</b> Collateral, maintenance margin and liquidation are '
+    +'ring-fenced per account: equity in one does not support a position in another, and a liquidation in one leaves the others untouched. '
+    +'<b>Utilisation</b> is maintenance margin over perpetual equity — at 100% the account is liquidated.<br><br>'
+    +'Master-account reconciliation: perpetuals '+usd(D.hasPf?D.eqPerp:D.av+D.avDex)+' + spot '+usd(D.eqSpot)
+    +' + staking and vaults '+usd(D.stkV+D.vltVal)+' = <b>'+usd(D.eqTotal)+'</b>.<br><br>'
+    +'The <b>Total equity</b>, <b>Perpetuals</b> and <b>24h P&L</b> tiles above, and the equity curve, cover the <b>master account only</b> — '
+    +'that is what Hyperliquid\'s <span class="mono">portfolio</span> endpoint reports. Sub-account equity is shown separately in its own tile '
+    +'and consolidated on the last line of this table.';
+}
+
+/* ---------- render ---------- */
+let SCOPE='all';                 /* 'all' = every account, 'main' = master only */
+function totals(){
+  const mPerp=D.hasPf?D.eqPerp:D.av+D.avDex, mSpot=D.eqSpot, mOther=D.stkV+D.vltVal;
+  const mEq=D.hasPf?D.eqTotal:mPerp+mSpot+mOther;
+  if(SCOPE==='main'||D.nSub===0)
+    return {perp:mPerp,spot:mSpot,other:mOther,eq:mEq,
+            pnl:D.per[0].pnl,vlm:D.per[0].vlm,pnlOk:true,mPerp:mPerp,mSpot:mSpot,mEq:mEq};
+  const sPerp=D.subEqPerp, sSpot=D.subEqSpot;
+  const sPnl=D.subPfOk?D.ACC.filter(a=>a.i>0&&a.pf).reduce((x,a)=>x+a.pf[0].pnl,0):0;
+  const sVlm=D.subPfOk?D.ACC.filter(a=>a.i>0&&a.pf).reduce((x,a)=>x+a.pf[0].vlm,0):0;
+  return {perp:mPerp+sPerp,spot:mSpot+sSpot,other:mOther,eq:mEq+sPerp+sSpot,
+          pnl:D.per[0].pnl+sPnl,vlm:D.per[0].vlm+sVlm,pnlOk:D.subPfOk,
+          mPerp:mPerp,mSpot:mSpot,mEq:mEq,sPerp:sPerp,sSpot:sSpot};
+}
+function renderKpis(){
+  const T=totals(), all=(SCOPE==='all'&&D.nSub>0);
+  const split=(m,s)=>all?('master '+usd(m,0)+' · subs '+usd(s,0)):'master account';
+  $('kEq').textContent=usd(T.eq);
+  $('kEqS').textContent=all?('consolidated over '+(D.nSub+1)+' accounts'):'master account only';
+  $('kPe').textContent=usd(T.perp);
+  $('kPeS').innerHTML='collateral + unrealised P&amp;L'+(all?' · '+split(T.mPerp,T.sPerp):'');
+  $('kSp').textContent=usd(T.spot);
+  $('kSpS').textContent=all?split(T.mSpot,T.sSpot):(D.spot.filter(b=>b.acc==='main').length+' assets');
+  $('kPn').textContent=sgn(T.pnl); $('kPn').className='v num '+cls(T.pnl);
+  $('kPnS').textContent=(T.pnlOk?'volume '+usd(T.vlm,0):'master only — too many sub-accounts to poll');
+  const sc=$('scopeBtn');
+  if(D.nSub>0){sc.classList.remove('hide');sc.textContent=all?'Scope: all accounts':'Scope: master only';}
+  else sc.classList.add('hide');
+}
 function render(){
-  if(!D){ $('srcNote').textContent='no data yet'; return; }
-  const upnlP=D.perps.reduce((a,p)=>a+p.upnl,0);
-  const upnlS=D.rows.reduce((a,r)=>a+(r.upnl||0),0);
-  const fundT=D.perps.reduce((a,p)=>a+p.cumF,0);
-  const sideAv=(D.dexAccts||[]).filter(d=>d.dex).reduce((a,d)=>a+d.av,0);
-  const upnlMain=D.perps.filter(p=>!p.dex&&!p.sub).reduce((a,p)=>a+p.upnl,0);
-  const stkV=(D.stk&&D.stk.value)||0, vltV=D.vltTotal||0, subV=D.subTotal||0;
-  const acct=D.spotVal+upnlMain+sideAv+stkV+vltV+subV, nw=acct-D.borrowed;
+  renderKpis();
+  if(D.borrowed>0&&D.hf!=null){
+    $('kHf').textContent=D.hf.toFixed(2);
+    $('kHf').className='v num '+(D.hf>=2?'pos':D.hf>=1.3?'warn':'neg');
+    $('kHfS').textContent=usd(D.borrowed)+' borrowed';
+  }else{$('kHf').textContent='∞';$('kHf').className='v num dim';$('kHfS').textContent='no outstanding debt';}
 
-  $('kNw').textContent=usd(nw,0);
-  $('kNwSub').textContent=[stkV?usd(stkV,0)+' staked':null,sideAv?usd(sideAv,0)+' side DEXs':null,
-    vltV?usd(vltV,0)+' vaults':null,subV?usd(subV,0)+' sub-accounts':null,
-    D.borrowed?usd(D.borrowed,0)+' borrowed':null].filter(Boolean).join(' · ')||'spot and perps only';
-  $('kOpen').textContent=sgn(upnlP+upnlS,0); $('kOpen').className='kval sm '+cls(upnlP+upnlS);
-  $('kOpenSub').textContent='spot '+sgn(upnlS,0)+' · perp '+sgn(upnlP,0);
-  const dP=D.P.day&&D.P.day.pnl.length?D.P.day.pnl[D.P.day.pnl.length-1][1]:0;
-  const aP=D.P.allTime&&D.P.allTime.pnl.length?D.P.allTime.pnl[D.P.allTime.pnl.length-1][1]:0;
-  $('kDay').textContent=sgn(dP,0); $('kDay').className='kval sm '+cls(dP);
-  $('kDaySub').textContent=D.P.day?'volume '+usd(D.P.day.vlm,0)+' traded':'—';
-  $('kAll').textContent=sgn(aP,0); $('kAll').className='kval sm '+cls(aP);
-  $('kAllSub').textContent=D.P.allTime?'volume '+usd(D.P.allTime.vlm,0)+' traded':'—';
-  $('kFund').textContent=sgn(fundT,2); $('kFund').className='kval sm '+cls(fundT);
-  $('kFundSub').textContent=D.perps.length+' open position'+(D.perps.length===1?'':'s')+' across '
-    +new Set(D.perps.map(p=>p.dexLab)).size+' venue'+(new Set(D.perps.map(p=>p.dexLab)).size===1?'':'s');
-
-  $('srcNote').textContent=(isLive?'live · ':'snapshot · ')+stamp(D.t);
-  if(!$('ADDR').value) $('ADDR').value=D.addr;   /* never clobber what is typed or resolved */
-  /* the exchange's own portfolio series covers spot + perp P&L + staking + vaults,
-     but not the HIP-3 DEXs and not sub-accounts, so compare like for like */
-  const comp=D.spotVal+upnlMain+stkV+vltV;
-  const bsRows=[['Spot at market',usd(D.spotVal,2),0],['Perp unrealised · core',sgn(upnlMain,2),0]];
-  if(stkV) bsRows.push(['Staked',usd(stkV,2),0]);
-  if(vltV) bsRows.push(['Vault deposits',usd(vltV,2),0]);
-  bsRows.push(['Rebuilt',usd(comp,2),1],
-    ['Exchange reports',D.exAv!=null?usd(D.exAv,2)+(comp?' ('+pc((comp-D.exAv)/D.exAv)+')':''):'—',0]);
-  (D.dexAccts||[]).filter(d=>d.dex).forEach(d=>bsRows.push([d.label+' DEX',usd(d.av,2),0]));
-  if(subV) bsRows.push(['Sub-accounts',usd(subV,2),0]);
-  bsRows.push(['Total account value',usd(acct,2),1],['Borrowed',usd(-D.borrowed,2),0],
-    ['Net equity',usd(nw,2),1]);
-  $('bs').innerHTML=bsRows.map(r=>'<div class="mrow"'+(r[2]?' style="border-top:1px solid var(--line);padding-top:7px"':'')+'><span>'+r[0]+'</span><b>'+r[1]+'</b></div>').join('');
-  $('mg').innerHTML=(D.dexAccts||[]).filter(d=>d.n>0||!d.dex).map(d=>
-      '<div class="mrow" style="color:var(--ink3)"><span>'+d.label+'</span><b>'+d.n+' pos · '+usd(d.av,2)+'</b></div>'
-     +'<div class="mrow"><span>&nbsp;&nbsp;notional</span><b>'+usd(d.ntl,0)+'</b></div>'
-     +'<div class="mrow"><span>&nbsp;&nbsp;margin used</span><b>'+usd(d.used,2)+'</b></div>'
-     +'<div class="mrow"><span>&nbsp;&nbsp;maintenance</span><b>'+usd(d.mm,2)+'</b></div>').join('')
-    +'<div class="mrow" style="border-top:1px solid var(--line);padding-top:7px"><span>Portfolio margin</span><b>'
-    +(D.pm?'on · ratio '+nf(D.pmRatio,6):'off')+'</b></div>'
-    +'<div class="mrow"><span>DEXs scanned</span><b>'+(D.dexScanned||1)+'</b></div>';
-  const bRows=D.rows.filter(r=>r.bor>0);
-  const iDay=bRows.reduce((a,r)=>a+r.bor*(r.borrowApy||0)/365,0);
-  const iAcc=bRows.reduce((a,r)=>a+(r.intPaid||0),0);
-  const wAvg=D.borrowed>0?bRows.reduce((a,r)=>a+r.bor*(r.borrowApy||0),0)/D.borrowed:0;
-  const ntl=D.perps.reduce((a,p)=>a+p.notional,0);
-  $('borrow').innerHTML=[
-    ['Borrowed',usd(D.borrowed,2)],
-    ['Borrow rate',bRows.length?nf(wAvg*100,3)+'% APR':'—'],
-    ['Pool utilisation',bRows.length&&bRows[0].util!=null?nf(bRows[0].util*100,2)+'%':'—'],
-    ['Rate breaks at','80% used, +4.75 pt/pt'],
-    ['Not yet capitalised',bRows.length?usd(-iAcc,6):'—'],
-    ['Interest per day',usd(-iDay,4)],
-    ['Interest per year',usd(-iDay*365,2)],
-    ['Break-even funding',ntl?pc(iDay*365/ntl,2)+' APR':'—'],
-    ['Health factor',D.hf!=null?nf(D.hf,4)+' · '+(D.health||''):'—']
-  ].map(r=>'<div class="mrow"><span>'+r[0]+'</span><b>'+r[1]+'</b></div>').join('');
-
-  $('dust').innerHTML=(D.dust.length?D.dust.map(r=>'<div class="mrow"><span>'+r.coin+'</span><b>'+usd(r.val,4)+'</b></div>').join('')
-    :'<div class="mrow"><span>nothing below $10</span><b>—</b></div>')
-    +'<div class="mrow" style="border-top:1px solid var(--line);padding-top:7px"><span>total hidden</span><b>'+usd(D.dustV,4)+'</b></div>';
-
-  /* perps */
-  $('perpNote').textContent=D.perps.length
-    ? (()=>{const ns=D.perps.filter(p=>p.sub).length, nv=new Set(D.perps.map(p=>p.dexLab)).size;
-        return D.perps.length+' across '+nv+' account'+(nv===1?'':'s')+(ns?' · '+ns+' on sub-accounts':'')
-          +' · '+usd(D.perps.reduce((a,p)=>a+p.notional,0),0)+' of notional';})()
-    : 'none open';
-  $('perps').innerHTML=D.perps.length? D.perps.map(p=>{
-    const dist=p.liq?(p.liq-p.mark)/p.mark:null;
-    const g=[];
-    g.push(['Size',nf(Math.abs(p.sz),4)+' '+p.coin.replace(/^[a-z]+:/,''),'']);
-    g.push(['Notional',usd(p.notional,2),'']);
-    g.push(['Entry',usd(p.entry,4),'']);
-    g.push(['Mark (liquidation)',usd(p.mark,4),'']);
-    g.push(['Return on equity',pc(p.roe),cls(p.roe)]);
-    g.push(['Margin used',usd(p.margin,2),'']);
-    g.push(['Leverage',nf(p.lev,0)+'× '+p.levType+' · max '+p.maxLev+'×','']);
-    g.push(['Liquidation',p.liq?usd(p.liq,4):'none',p.liq?'':'up']);
-    if(dist!=null) g.push(['Room to liquidation',nf(Math.abs(dist)*100,1)+'% '+(dist>0?'above':'below'),
-      Math.abs(dist)<0.15?'dn':'up']);
-    g.push(['Funding rate now',pc(p.fRate*8760,1)+' APR',p.sz<0?cls(p.fRate):cls(-p.fRate)]);
-    g.push(['Opened',p.t0?stamp(p.t0).slice(0,16):'before the fill window','']);
-    g.push(['Age',p.t0?dur(D.t-p.t0):'—','']);
-    const net=p.upnl+p.cumF;
-    const head=[['Unrealised',sgn(p.upnl,2),cls(p.upnl)],
-                ['Funding since open',sgn(p.cumF,4),cls(p.cumF)],
-                ['Net so far',sgn(net,2),cls(net)]];
-    return '<div class="pcard"><div class="ph"><span class="nm">'+p.coin.replace(/^[a-z]+:/,'')+'</span>'
-      +'<span class="tag '+(p.sz<0?'perp':'spot')+'">'+p.side+'</span>'
-      +'<span class="tag" style="background:'+(p.sub?'var(--accent-soft)':'var(--surf3)')+';color:'+(p.sub?'var(--accent-ink)':'var(--ink2)')+'">'
-      +(p.sub?'sub · '+p.dexLab:p.dexLab)+'</span>'
-      +'<span class="sz">'+nf(Math.abs(p.sz),4)+' @ '+usd(p.entry,4)+'</span></div>'
-      +'<div style="display:flex;gap:30px;flex-wrap:wrap;margin-bottom:16px">'
-      +head.map(x=>'<div><div class="klab">'+x[0]+'</div><div class="pv big '+x[2]+'">'+x[1]+'</div></div>').join('')
-      +'</div>'
-      +'<div class="pg">'+g.map(x=>'<div><div class="klab">'+x[0]+'</div><div class="pv '+x[2]+'">'+x[1]+'</div></div>').join('')+'</div></div>';
-  }).join('') : '<div class="pcard" style="color:var(--ink3)">No open perp position.</div>';
-
-  /* spot */
-  const nUn=D.rows.filter(r=>r.val>=MIN&&!r.matched&&!r.stable).length;
-  $('spotNote').textContent=D.rows.length+' line'+(D.rows.length===1?'':'s')+' at or above $'+MIN+(nUn?' · '+nUn+' without a rebuildable basis':'');
-  $('spots').innerHTML='<thead><tr><th>Asset</th><th>Quantity</th><th>Price</th><th>Value</th><th>Cost basis</th><th>Unreal.</th><th>Realised</th><th>Fees</th><th>Borrowed</th><th>Interest</th><th>Rate</th><th>Since</th></tr></thead><tbody>'
-    +D.rows.map(r=>{
-      const badge=r.sup>0?'<span class="pillx b" style="margin-left:7px">supplied · ltv '+nf(r.ltv,2)+'</span>'
-        :(r.bor>0?'<span class="pillx a" style="margin-left:7px">borrowed</span>':'');
-      return '<tr><td><b style="font-family:var(--sans);font-weight:600">'+r.coin+'</b>'+badge+'</td>'
-      +'<td>'+nf(r.qty,r.qty>1000?2:6)+'</td><td>'+(r.px?usd(r.px,r.px>100?2:5):'—')+'</td>'
-      +'<td>'+usd(r.val,2)+'</td>'
-      +'<td>'+(r.stable?'<span style="color:var(--ink3)">—</span>':(r.matched&&r.avg?usd(r.avg,r.avg>100?2:5):'<span style="color:var(--ink3)">no basis in window</span>'))+'</td>'
-      +'<td class="'+cls(r.upnl||0)+'">'+(r.upnl!=null?sgn(r.upnl,2):'—')+'</td>'
-      +'<td class="'+cls(r.real)+'">'+(r.real?sgn(r.real,2):'—')+'</td>'
-      +'<td>'+(r.fee?usd(-r.fee,2):'—')+'</td>'
-      +'<td class="'+(r.bor?'dn':'')+'">'+(r.bor?usd(-r.bor,2):'—')+'</td>'
-      +'<td class="'+(r.bor?'dn':(r.intEarned>0?'up':''))+'">'+intCell(r)+'</td>'
-      +'<td>'+rateCell(r)+'</td>'
-      +'<td style="color:var(--ink3)">'+(r.t0?stamp(r.t0).slice(0,10):'—')+'</td></tr>';}).join('')+'</tbody>';
-
-  /* funding */
-  $('fdNote').textContent=D.funding.length?'last '+D.funding.length+' hourly settlements':'none yet';
-  let c=0;
-  $('fund').innerHTML=D.funding.length
-    ?'<thead><tr><th>Time (UTC)</th><th>Coin</th><th>Position</th><th>Rate</th><th>Annualised</th><th>Amount</th></tr></thead><tbody>'
-     +D.funding.map(z=>'<tr><td>'+stamp(z.t).slice(0,16)+'</td><td>'+z.coin+'</td><td>'+nf(z.sz,2)+'</td>'
-      +'<td>'+nf(z.rate*100,6)+'%</td><td>'+pc(z.rate*8760,1)+'</td>'
-      +'<td class="'+cls(z.usdc)+'">'+sgn(z.usdc,6)+'</td></tr>').join('')+'</tbody>'
-    :'<tbody><tr><td style="text-align:left;color:var(--ink3)">No funding settlement in the window.</td></tr></tbody>';
-
-  drawHeld(); drawRisk(); drawCapacity(); drawV(); drawP();
+  const other=D.stkV+D.vltVal;
+  if(other>1){
+    $('kStk').parentNode.classList.remove('hide');
+    $('kStk').textContent=usd(other);
+    $('kStkS').textContent=(D.stkQ>0?qty(D.stkQ,2)+' HYPE staked':'')+(D.vltVal>0?(D.stkQ>0?' · ':'')+'vaults '+usd(D.vltVal,0):'');
+  }else{ $('kStk').parentNode.classList.add('hide'); }
+  if(D.nSub>0){
+    $('kSub').parentNode.classList.remove('hide');
+    $('kSub').textContent=usd(D.subEqPerp+D.subEqSpot);
+    $('kSubS').textContent=D.nSub+' sub-account'+(D.nSub>1?'s':'')+' · '+D.perps.filter(p=>p.acc!=='main').length+' positions';
+  }else{ $('kSub').parentNode.classList.add('hide'); }
+  renderAccounts(); renderVaults(); renderOrders();
+  renderBanner(); renderChart(); renderPerf(); renderSpot(); renderPerps();
+  renderDelta(); renderDebt(); renderRepay(); renderMisc();
+  $('stamp').innerHTML='Address <span class="mono">'+D.addr+'</span> — retrieved '+new Date(D.t).toLocaleString(L)
+    +' — perpetual books: '+D.books.join(', ')+' — no order history was read.';
+  $('out').classList.remove('hide');
 }
 
-
-function drawRisk(){
-  const R=risk(), C=$('riskCard'), B=$('banner');
-  if(!R){C.hidden=true;B.hidden=true;return;}
-  C.hidden=false;
-  const yr=t=>t<=0?'now':(t<1?nf(t*365,0)+' days':(t<100?nf(t,1)+' years':'over a century'));
-  const lab={safe:'Interest is not a threat',watch:'Worth watching',danger:'Interest is a live risk'};
-  $('riskPill').className='pill '+R.lvl;
-  $('riskPill').textContent={safe:'safe',watch:'watch',danger:'danger'}[R.lvl];
-  $('riskNote').textContent=lab[R.lvl];
-  B.hidden=(R.lvl==='safe');
-  B.className='banner '+R.lvl;
-  const wh=R.why.join('; '); 
-  B.innerHTML='<b>'+lab[R.lvl]+'.</b> '+wh.charAt(0).toUpperCase()+wh.slice(1)+'. At '+nf(R.wRate*100,2)
-    +'% the debt reaches the liquidation trigger in <b>'+yr(R.t)+'</b> if the price does not move.';
-  const cells=[
-    ['Interest budget',usd(R.budget,0),'available-after-maintenance above the trigger'],
-    ['Time to trigger',yr(R.t),'at '+nf(R.wRate*100,2)+'%, price unchanged'],
-    ['Pool utilisation',nf(R.util*100,2)+'%','rate escalates past 80%'],
-    ['Carry, net',sgn(R.fund-R.cost,0)+' /yr','funding '+usd(R.fund,0)+' less interest '+usd(R.cost,0)],
-    ['When interest beats funding',
-      R.uStar==null?'It already does':(R.uStar>1?'Never':'At '+nf(R.uStar*100,0)+'% pool use'),
-      R.uStar==null?'the loan costs more than the funding your positions collect'
-      :(R.uStar>1?'even at the maximum 100% rate the loan would cost '+usd(D.borrowed,0)+' a year, less than the '+usd(R.fund,0)+' of funding you collect'
-      :'the pool is at '+nf(R.util*100,0)+'% now; past '+nf(R.uStar*100,0)+'% the loan costs more than funding pays')],
-    ['Health factor',D.hf!=null?nf(D.hf,3):'—','collateral × LTV ÷ debt']
-  ];
-  $('riskGrid').innerHTML=cells.map(c=>'<div class="rcell"><div class="klab">'+c[0]+'</div>'
-    +'<div class="pv big'+(c[0]==='Carry, net'?' '+cls(R.fund-R.cost):'')+'">'+c[1]+'</div>'
-    +'<div class="bsub" style="font:400 11px/1.4 var(--mono);color:var(--ink3);margin-top:5px">'+c[2]+'</div></div>').join('');
-  const w=Math.min(100,R.util*100);
-  $('utilBar').innerHTML='<div class="bar" style="height:10px"><i style="width:'+w+'%;background:'
-    +(R.util>=0.8?'var(--dn)':R.util>=0.72?'var(--alt)':'var(--up)')+'"></i></div>'
-    +'<div style="position:absolute;left:80%;top:-3px;bottom:-3px;width:2px;background:var(--ink)"></div>';
-  $('scen').innerHTML='<thead><tr><th>Pool utilisation</th><th>Borrow rate</th><th>Interest / year</th><th>Time to trigger</th></tr></thead><tbody>'
-    +R.scen.map(x=>'<tr'+(Math.abs(x.u-R.util)<1e-9?' style="background:var(--surf2)"':'')+'>'
-      +'<td>'+nf(x.u*100,1)+'%'+(Math.abs(x.u-R.util)<1e-9?' <span class="pillx b">now</span>':'')+'</td>'
-      +'<td>'+nf(x.r*100,2)+'%</td><td>'+usd(-D.borrowed*x.r,0)+'</td>'
-      +'<td>'+yr(x.t)+'</td></tr>').join('')+'</tbody>';
+/* ---- equity curve: the same series as the Portfolio page ---- */
+let cW='allTime', cM='eq';
+function renderChart(){
+  const P=D.P, key=cW, pk='perp'+(key==='allTime'?'AllTime':key.charAt(0).toUpperCase()+key.slice(1));
+  const tot=P[key], per=P[pk];
+  if(!tot||!tot.accountValueHistory||tot.accountValueHistory.length<2){$('chartCard').classList.add('hide');return;}
+  $('chartCard').classList.remove('hide');
+  const src=cM==='eq'?tot.accountValueHistory:tot.pnlHistory;
+  const src2=cM==='eq'?(per&&per.accountValueHistory):(per&&per.pnlHistory);
+  const pts=src.map(p=>[+p[0],n(p[1])]), pts2=(src2||[]).map(p=>[+p[0],n(p[1])]);
+  const W=900,H=240,PL=8,PR=8,PT=14,PB=22;
+  const xs=pts.map(p=>p[0]), all=pts.map(p=>p[1]).concat(pts2.map(p=>p[1]));
+  const x0=Math.min.apply(null,xs), x1=Math.max.apply(null,xs);
+  let y0=Math.min.apply(null,all), y1=Math.max.apply(null,all);
+  const rawLo=y0, rawHi=y1;
+  if(y1===y0){y1+=1;y0-=1;}
+  const pad=(y1-y0)*0.08; y0-=pad; y1+=pad;
+  if(cM==='pnl'&&y0>0)y0=0; if(cM==='pnl'&&y1<0)y1=0;
+  const X=t=>PL+(t-x0)/(x1-x0||1)*(W-PL-PR);
+  const Y=v=>PT+(1-(v-y0)/(y1-y0||1))*(H-PT-PB);
+  const path=a=>a.map((p,i)=>(i?'L':'M')+X(p[0]).toFixed(1)+' '+Y(p[1]).toFixed(1)).join(' ');
+  const lastv=pts[pts.length-1][1];
+  const up=cM==='pnl'?lastv>=0:(lastv>=pts[0][1]);
+  const col=up?'var(--pos)':'var(--neg)';
+  let g='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" style="width:100%;height:240px;display:block">';
+  if(cM==='pnl'&&y0<0&&y1>0) g+='<line x1="'+PL+'" y1="'+Y(0).toFixed(1)+'" x2="'+(W-PR)+'" y2="'+Y(0).toFixed(1)+'" stroke="var(--line)" stroke-width="1"/>';
+  g+='<path d="'+path(pts)+'" fill="none" stroke="'+col+'" stroke-width="2" vector-effect="non-scaling-stroke"/>';
+  if(pts2.length>1) g+='<path d="'+path(pts2)+'" fill="none" stroke="var(--dim)" stroke-width="1.5" stroke-dasharray="4 3" vector-effect="non-scaling-stroke"/>';
+  g+='</svg>';
+  $('chart').innerHTML=g;
+  const fmt=t=>new Date(t).toLocaleDateString(L,{month:'short',day:'2-digit'});
+  $('chartAx').innerHTML='<span>'+fmt(x0)+'</span><span>low '+usd(rawLo,0)+' · high '+usd(rawHi,0)+'</span><span>'+fmt(x1)+'</span>';
+  $('chartLeg').innerHTML='<b style="color:'+col+'">— total</b> &nbsp; <span class="dim">- - - perpetuals only</span> &nbsp; '
+    +'<span class="dim">latest '+(cM==='pnl'?sgn(lastv):usd(lastv))+'</span>';
 }
 
-
-function drawCapacity(){
-  const C=capacity(), card=$('capCard');
-  if(!C||!(C.coll>0)){card.hidden=true;return;} card.hidden=false;
-
-  $('capBig').textContent=usd(Math.max(0,C.extra),0);
-  $('capBig').className='capbig '+(C.extra>0?'up':'dn');
-  $('capSub').innerHTML='more USDC, on top of the <b>'+usd(C.debt,0)+'</b> you already owe';
-
-  $('capWhy').innerHTML='Hyperliquid lends <b>'+nf(C.wLtv*100,0)+' cents</b> for every dollar of collateral you supply. '
-    +'Yours is worth <b>'+usd(C.coll,0)+'</b>, so the most it will ever lend is <b>'+usd(C.lend,0)+'</b>. '
-    +'You have taken <b>'+usd(C.debt,0)+'</b>. That leaves <b>'+usd(Math.max(0,C.extra),0)+'</b>.';
-
-  /* bar: 0 -> a little past liquidation */
-  const top=Math.max(C.liq,C.lend,C.debt)*1.08;
-  const at=v=>Math.max(0,Math.min(100,v/top*100));
-  $('capBar').innerHTML=
-     '<div class="cb"><i class="fill" style="width:'+at(C.debt)+'%"></i>'
-    +'<i class="zone" style="left:'+at(C.lend)+'%;width:'+(at(C.liq)-at(C.lend))+'%"></i></div>'
-    +'<div class="mk" style="left:'+at(C.debt)+'%"><span>you owe<br><b>'+usd(C.debt,0)+'</b></span></div>'
-    +'<div class="mk lim" style="left:'+at(C.lend)+'%"><span>it stops lending<br><b>'+usd(C.lend,0)+'</b></span></div>'
-    +'<div class="mk bad" style="left:'+at(C.liq)+'%"><span>liquidation<br><b>'+usd(C.liq,0)+'</b></span></div>';
-
-  const rows=[
-    ['What stops you first', C.binds==='lender'
-      ? 'The lender, not liquidation. It refuses at '+usd(C.lend,0)+' of debt; liquidation only starts at '+usd(C.liq,0)+' — a cushion of '+usd(C.cushion,0)+'.'
-      : 'Liquidation, at '+usd(C.liq,0)+' of debt, before the lender\u2019s own '+usd(C.lend,0)+' limit. Stay well under it.'],
-    ['What it would cost', 'Drawing the whole '+usd(Math.max(0,C.extra),0)+' adds '+usd(C.cost,0)+' a year of interest at today\u2019s '+nf(C.rate*100,2)+'% rate.'],
-    ['If the price halved', 'The limit follows the collateral down to '+usd(C.half.lend,0)+' in total'
-      +(C.half.extra>0?', still '+usd(C.half.extra,0)+' above what you owe today.'
-                      :' — below the '+usd(C.debt,0)+' you owe, so you could not borrow at all and would have to repay.')]
-  ];
-  $('capRows').innerHTML=rows.map(r=>'<div class="cr"><div class="klab">'+r[0]+'</div><p>'+r[1]+'</p></div>').join('');
+function renderPerf(){
+  const lbl={day:'24 hours',week:'7 days',month:'30 days',allTime:'All time'};
+  let h='<tr><th>Period</th><th>Total P&amp;L</th><th>Perpetuals P&amp;L</th><th>Spot P&amp;L</th><th>Total volume</th><th>Perpetuals volume</th></tr>';
+  const all=(SCOPE==='all'&&D.nSub>0&&D.subPfOk);
+  D.per.forEach((r,i)=>{
+    const sPnl=all?D.ACC.filter(a=>a.i>0&&a.pf).reduce((x,a)=>x+a.pf[i].pnl,0):0;
+    const sVlm=all?D.ACC.filter(a=>a.i>0&&a.pf).reduce((x,a)=>x+a.pf[i].vlm,0):0;
+    const sPp=all?D.ACC.filter(a=>a.i>0&&a.pf).reduce((x,a)=>x+a.pf[i].ppnl,0):0;
+    const sPv=all?D.ACC.filter(a=>a.i>0&&a.pf).reduce((x,a)=>x+a.pf[i].pvlm,0):0;
+    r={k:r.k,pnl:r.pnl+sPnl,vlm:r.vlm+sVlm,ppnl:r.ppnl+sPp,pvlm:r.pvlm+sPv};
+    const sp=r.pnl-r.ppnl;
+    h+='<tr><td><b>'+lbl[r.k]+'</b></td>'
+      +'<td class="'+cls(r.pnl)+'"><b>'+sgn(r.pnl)+'</b></td>'
+      +'<td class="'+cls(r.ppnl)+'">'+sgn(r.ppnl)+'</td>'
+      +'<td class="'+cls(sp)+'">'+sgn(sp)+'</td>'
+      +'<td>'+usd(r.vlm,0)+'</td><td class="dim">'+usd(r.pvlm,0)+'</td></tr>';});
+  $('perfT').innerHTML=h;
+  $('perfN').innerHTML=D.hasPf
+    ? 'Taken from the <span class="mono">portfolio</span> endpoint that populates Hyperliquid\'s own Portfolio page — one call per account. '
+      +(all?'<b>Totals are consolidated over the master account and its '+D.nSub+' sub-accounts.</b> '
+           :(D.nSub>0?'<b>Master account only'+(D.subPfOk?' — switch the scope button to consolidate.':'; '+D.nSub+' sub-accounts exceed the polling limit, so their performance is not included.')+'</b> ':''))
+      +'Perpetuals and spot are consolidated on the same basis, so the spot residual holds in either scope.<br><br>'
+      +'<b>Read P&amp;L and equity as separate facts.</b> An account that has swept its profits out shows large historic P&amp;L against a small '
+      +'current balance — the trading happened, the capital has simply moved on.'
+    : '<span class="warn">The <span class="mono">portfolio</span> endpoint returned nothing for this address; the figures above are computed locally.</span>';
 }
 
+function renderSpot(){
+  let h='<tr>'+(D.nSub?'<th>Account</th>':'')+'<th>Asset</th><th>Quantity</th><th>Price</th><th>Value</th><th>Supplied as collateral</th>'
+       +'<th>Max short, no borrowing</th><th>Max short, price-neutral</th><th>Collateral credit</th><th>Borrowed</th></tr>';
+  let tot=0, any=false;
+  const sl=D.spot.filter(inFilter).slice();
+  const syn=(acc,coin,v,kind,ttl)=>sl.push({coin:coin,ti:0,qty:v,px:1,val:v,sup:0,bor:0,acc:acc,ltv:0,oracle:1,kind:kind,ttl:ttl});
+  /* USDC posted as perpetual collateral is not a spot balance, but it is owned */
+  const coreEq=(D.hasPf?D.eqPerp:D.av+D.avDex)-D.avDex;
+  if(coreEq>1&&(!ACCF||ACCF==='main')) syn('main','USDC',coreEq,'perp','margin posted in the core perpetual account, marked to market');
+  if(D.avDex>1&&(!ACCF||ACCF==='main')) syn('main','USDC',D.avDex,'perp','margin posted on HIP-3 venues');
+  D.ACC.filter(a=>a.i>0&&(a.av||0)>1&&(!ACCF||ACCF===a.id))
+       .forEach(a=>syn(a.id,'USDC',a.av,'perp','margin posted in this sub-account\'s perpetual account'));
+  if(D.stkQ>0&&(!ACCF||ACCF==='main'))
+    sl.push({coin:'HYPE',ti:150,qty:D.stkQ,px:D.hypePx,val:D.stkQ*D.hypePx,sup:0,bor:0,acc:'main',ltv:0,oracle:D.hypePx,kind:'stake'});
+  if(D.vltVal>1&&(!ACCF||ACCF==='main')) syn('main','USDC',D.vltVal,'vault','equity deposited in vaults');
+  sl.sort((a,b)=>(accOf(a.acc).i-accOf(b.acc).i)||(b.val-a.val));
+  if(!sl.length) h+='<tr><td colspan="10" class="dim">No balance on this account.</td></tr>';
+  let stkRow=0, perpRow=0, vltRow=0;
+  sl.forEach(b=>{
+    if(b.kind==='stake') stkRow+=b.val;
+    else if(b.kind==='perp') perpRow+=b.val;
+    else if(b.kind==='vault') vltRow+=b.val;
+    else tot+=b.val;
+    const r=(b.acc==='main'&&!b.kind)?upside(b.coin):null;
+    let c1='<span class="dim">—</span>', c2=c1;
+    if(r&&r.S>0){ any=true;
+      c1='<span class="'+(r.Z>r.capShort?'warn':'pos')+'">'+qty(r.capShort,2)+'</span>'
+         +' <span class="dim">('+(r.ltv*100).toFixed(0)+'%)</span>';
+      c2='<span class="'+(r.Z>r.neutralShort?'warn':'pos')+'">'+qty(r.neutralShort,2)+'</span>'
+         +' <span class="dim">('+(r.neutralShort/r.S*100).toFixed(1)+'%)</span>';
+    }
+    h+='<tr'+(D.nSub?' style="box-shadow:inset 3px 0 0 '+accColor(accOf(b.acc).i)+'"':'')+'>'
+      +(D.nSub?'<td>'+accChip(b.acc)+'</td>':'')
+      +'<td><b>'+b.coin+'</b>'
+      +(b.kind==='stake'?'&nbsp;<span class="tag" title="held in the staking account; not spot and not eligible as portfolio-margin collateral">staking</span>':'')
+      +(b.kind==='perp'?'&nbsp;<span class="tag" title="'+b.ttl+'">perp collateral</span>':'')
+      +(b.kind==='vault'?'&nbsp;<span class="tag" title="'+b.ttl+'">vault</span>':'')
+      +(b.coin==='USDC'&&b.acc==='main'&&!b.kind&&D.unified?'&nbsp;<span class="tag" title="excludes margin held in the perpetual books">spot only</span>':'')+'</td>'
+      +'<td>'+qty(b.qty,b.qty<1?6:4)+'</td><td>'+usd(b.px,b.px<1?6:4)+'</td>'
+      +'<td><b>'+usd(b.val)+'</b></td>'
+      +'<td>'+(b.sup>0?qty(b.sup,4):'<span class="dim">—</span>')+'</td>'
+      +'<td>'+c1+'</td><td>'+c2+'</td>'
+      +'<td class="dim">'+(b.credit?usd(b.credit):'—')+'</td>'
+      +'<td class="'+(b.bor>0?'neg':'dim')+'">'+(b.bor>0?usd(b.bor):'—')+'</td></tr>';});
+  const cs=(D.nSub?4:3);
+  const mSpot=sl.filter(b=>!b.kind&&b.acc==='main').reduce((a,b)=>a+b.val,0);
+  const sSpot=tot-mSpot;
+  const line=(l,v)=>'<tr><td colspan="'+cs+'" class="dim">'+l+'</td><td><b>'+usd(v)+'</b></td><td colspan="5"></td></tr>';
+  if(D.nSub&&!ACCF&&sSpot>0){ h+=line('Spot — master account',mSpot); h+=line('Spot — sub-accounts',sSpot); }
+  h+=line('Total spot'+(ACCF?' — '+accOf(ACCF).name:''),tot);
+  if(perpRow>0) h+=line('Perpetual collateral',perpRow);
+  if(stkRow>0)  h+=line('Staking account',stkRow);
+  if(vltRow>0)  h+=line('Vaults',vltRow);
+  if(perpRow+stkRow+vltRow>0)
+    h+='<tr><td colspan="'+cs+'"><b>Everything owned'+(ACCF?' — '+accOf(ACCF).name:'')+'</b></td>'
+      +'<td><b>'+usd(tot+perpRow+stkRow+vltRow)+'</b></td><td colspan="5"></td></tr>';
+  $('spotT').innerHTML=h;
 
-function drawHeld(){
-  const S=D.stk||{}, card=$('heldCard');
-  const has=(S.value>=MIN)||(D.vltTotal>=MIN)||(D.subTotal>=MIN);
-  if(!has){card.hidden=true;return;} card.hidden=false;
-  $('heldNote').textContent='outside the spot and perp balances';
-  const big=[];
-  if(S.value>=MIN) big.push(['Staked HYPE',usd(S.value,0),nf(S.total,2)+' HYPE at '+usd(S.px,2)]);
-  if(S.r30>0) big.push(['Staking rewards',nf(S.r30,2)+' HYPE',usd(S.r30*S.px,0)+' over 30 days · '+nf(S.r1,3)+' HYPE yesterday']);
-  if(S.pending>0) big.push(['Unstaking',nf(S.pending,2)+' HYPE',S.nPending+' withdrawal'+(S.nPending===1?'':'s')+' in the queue · '+usd(S.pending*S.px,0)]);
-  if(D.vltTotal>=MIN) big.push(['Vault deposits',usd(D.vltTotal,0),D.vlt.length+' vault'+(D.vlt.length===1?'':'s')]);
-  if(D.subTotal>=MIN) big.push(['Sub-accounts',usd(D.subTotal,0),D.sub.length+' funded of the ones reported']);
-  $('heldGrid').innerHTML=big.map(c=>'<div class="rcell"><div class="klab">'+c[0]+'</div>'
-    +'<div class="pv big">'+c[1]+'</div>'
-    +'<div class="bsub" style="font:400 11px/1.4 var(--mono);color:var(--ink3);margin-top:5px">'+c[2]+'</div></div>').join('');
-  let t='';
-  if(S.vals&&S.vals.length){
-    t+='<thead><tr><th>Validator</th><th>Staked HYPE</th><th>Value</th><th>Share</th><th>Locked until</th></tr></thead><tbody>'
-      +S.vals.slice(0,12).map(v=>'<tr><td>'+v.name+'</td><td>'+nf(v.amt,2)+'</td><td>'+usd(v.amt*S.px,0)+'</td>'
-      +'<td>'+nf(S.delegated>0?v.amt/S.delegated*100:0,1)+'%</td>'
-      +'<td style="color:var(--ink3)">'+(v.lock?stamp(v.lock).slice(0,10):'—')+'</td></tr>').join('')
-      +(S.vals.length>12?'<tr><td colspan="5" style="color:var(--ink3);text-align:left">and '+(S.vals.length-12)+' more validators</td></tr>':'')
-      +'</tbody>';
+  let note='';
+  if(perpRow+stkRow+vltRow>0){
+    note+='<b>Every balance the address owns, wherever it sits.</b> Hyperliquid keeps capital in four separate places and only the first is a spot balance:<br>'
+      +'&nbsp;&nbsp;<b>Untagged rows</b> — spot inventory, freely transferable, and the only balances eligible as portfolio-margin collateral.<br>'
+      +(perpRow>0?'&nbsp;&nbsp;<span class="tag">perp collateral</span> — USDC posted against the clearinghouse to margin open positions, shown at current equity '
+        +'so it already includes unrealised P&L. It is withdrawable only up to the free-margin figure, not in full.<br>':'')
+      +(stkRow>0?'&nbsp;&nbsp;<span class="tag">staking</span> — delegated or undelegated HYPE in the staking account. Not spot, not eligible as collateral, '
+        +'and subject to an unstaking queue. The net delta table counts it as exposure.<br>':'')
+      +(vltRow>0?'&nbsp;&nbsp;<span class="tag">vault</span> — equity deposited in vaults, subject to their lock-up.<br>':'')
+      +'<b>Everything owned</b> is the sum of the four and reconciles with the Consolidated line of the Accounts table.<br><br>';
   }
-  $('heldTbl').innerHTML=t; $('heldTbl').hidden=!t;
-  let v='';
-  if(D.vlt.length||D.sub.length){
-    v='<thead><tr><th>Holding</th><th>Address</th><th>Value</th><th>Note</th></tr></thead><tbody>'
-      +D.vlt.map(x=>'<tr><td>Vault</td><td style="color:var(--ink3)">'+x.addr.slice(0,10)+'…'+x.addr.slice(-4)+'</td>'
-        +'<td>'+usd(x.eq,2)+'</td><td style="color:var(--ink3)">'+(x.lock?'locked to '+stamp(x.lock).slice(0,10):'—')+'</td></tr>').join('')
-      +D.sub.map(x=>'<tr><td>Sub-account · '+x.name+'</td><td style="color:var(--ink3)">'+x.addr.slice(0,10)+'…'+x.addr.slice(-4)+'</td>'
-        +'<td>'+usd(x.tot,2)+'</td><td style="color:var(--ink3)">'+usd(x.perp,0)+' perp · '+usd(x.spot,0)+' spot · '+x.n+' pos</td></tr>').join('')
-      +'</tbody>';
+  if(any) note+='<b>Short capacity against posted collateral.</b><br>'
+    +'<b>Max short, no borrowing</b> = quantity × LTV. Beyond it, a rally forces the protocol to borrow USDC against your collateral, '
+    +'and at some price that borrowing hits its ceiling.<br>'
+    +'<b>Max short, price-neutral</b> = quantity × liquidation threshold ÷ (1 + maintenance margin). '
+    +'Below this figure the account gains liquidation value as the price rises, so no rally can liquidate it. '
+    +'The liquidation threshold is 0.5 + 0.5 × LTV — 0.825 at an LTV of 0.65 — and it is that figure, not the LTV, that governs liquidation.<br>'
+    +'The corresponding trigger prices are shown in the perpetual positions table.<br><br>';
+  note+=D.unified
+    ? '<b>Why the USDC line is smaller than the raw API balance.</b> Under portfolio margin, spot and perpetuals share a single USDC balance: '
+      +'<span class="mono">spotClearinghouseState</span> returns a total that already includes the margin held in the perpetual books. '
+      +'Adding it to perpetual equity would count the same capital twice. The line above therefore shows USDC genuinely available in spot, '
+      +'backed out of reported spot equity ('+usd(D.eqSpot)+' less the value of the other tokens).'
+    : 'Marked at mid; quantities sourced from <span class="mono">spotClearinghouseState</span>.';
+  $('spotN').innerHTML=note;
+}
+
+/* next funding on other venues, annualised, signed for this position */
+function venueFunding(p){
+  const v=D.PFUND[p.base]; if(!v) return '—';
+  const out=[];
+  v.forEach(e=>{
+    const name=e[0], d=e[1];
+    if(!d||name==='HlPerp') return;
+    const hrs=n(d.fundingIntervalHours)||8;
+    const a=-Math.sign(p.sz)*n(d.fundingRate)*(8760/hrs);
+    out.push('<span class="'+cls(a)+'">'+name.replace('Perp','')+' '+pct(a,1)+'</span>');
+  });
+  return out.length?out.join(' · '):'—';
+}
+
+function renderPerps(){
+  if(!D.perps.length){$('perpCard').classList.add('hide');return;}
+  $('perpCard').classList.remove('hide');
+  let h='<tr>'+(D.nSub?'<th>Account</th>':'')+'<th>Asset</th><th>Side</th><th>Size</th><th>Notional</th><th>Entry</th><th>Mark</th><th>Unrealised P&amp;L</th><th>Return</th>'
+       +'<th>Funding since open</th><th>Funding APR</th><th>Other venues</th><th>Exchange liq. price</th>'
+       +'<th>Borrow-capacity breach</th><th>Portfolio-margin liq.</th><th>Leverage</th></tr>';
+  let any=false;
+  const list=D.perps.filter(inFilter).slice()
+    .sort((a,b)=>(accOf(a.acc).i-accOf(b.acc).i)||(Math.abs(b.ntl)-Math.abs(a.ntl)));
+  const NC=D.nSub?16:15;
+  const hdr=a=>{
+    const eq=a.i===0?(D.hasPf?D.eqPerp:D.av+D.avDex):a.av;
+    const up=D.perps.filter(x=>x.acc===a.id).reduce((x,p)=>x+p.upnl,0);
+    const mm=a.i===0?D.mm:a.mm, wd=a.wd||0, u=eq>0?mm/eq:0;
+    return '<tr class="grp"><td colspan="'+NC+'">'
+      +'<span class="accchip"><i style="background:'+accColor(a.i)+'"></i><b>'+a.name+'</b></span>'
+      +'<span class="gsep">USDC collateral <b>'+usd(eq)+'</b></span>'
+      +'<span class="gsep">unrealised <b class="'+cls(up)+'">'+sgn(up)+'</b></span>'
+      +'<span class="gsep">maintenance <b>'+usd(mm)+'</b></span>'
+      +'<span class="gsep">buffer <b>'+usd(Math.max(0,eq-mm))+'</b></span>'
+      +(wd>0?'<span class="gsep">withdrawable <b>'+usd(wd)+'</b></span>':'')
+      +'<span class="gsep">utilisation <b class="'+(u>0.66?'neg':u>0.4?'warn':'')+'">'+(u*100).toFixed(0)+'%</b></span>'
+      +'</td></tr>';
+  };
+  if(!list.length) h+='<tr><td colspan="'+NC+'" class="dim">No position on this account.</td></tr>';
+  let cur=null;
+  list.forEach(p=>{
+    if(p.acc!==cur){cur=p.acc;h+=hdr(accOf(cur));}
+    const apr=-Math.sign(p.sz)*p.fRate*8760;
+    const dist=p.liq>0?(p.liq-p.mark)/p.mark:null;
+    const r=(p.dex==='core'&&p.sz<0&&p.acc==='main')?upside(p.base):null;
+    const cell=v=>{
+      if(!r) return '<span class="dim">—</span>';
+      if(!isFinite(v)) return '<span class="pos">never</span>';
+      const up=(v-p.mark)/p.mark;
+      return '<b class="'+(up<0.5?'neg':up<2?'warn':'')+'">'+usd(v,2)+'</b> <span class="dim">('+pct(up,0)+')</span>';};
+    if(r) any=true;
+    h+='<tr'+(D.nSub?' style="box-shadow:inset 3px 0 0 '+accColor(accOf(p.acc).i)+'"':'')+'>'
+      +(D.nSub?'<td>'+accChip(p.acc)+'</td>':'')
+      +'<td><b>'+p.base+'</b>'+(p.dex!=='core'?'&nbsp;<span class="tag">'+p.dex+'</span>':'')+'</td>'
+      +'<td class="'+(p.sz<0?'neg':'pos')+'">'+(p.sz<0?'SHORT':'LONG')+'</td>'
+      +'<td>'+qty(Math.abs(p.sz),4)+'</td><td>'+usd(Math.abs(p.ntl))+'</td>'
+      +'<td>'+usd(p.entry,p.entry<1?5:4)+'</td><td>'+usd(p.mark,p.mark<1?5:4)+'</td>'
+      +'<td class="'+cls(p.upnl)+'"><b>'+sgn(p.upnl)+'</b></td>'
+      +'<td class="'+cls(p.upnl)+'">'+pct(p.entry?p.upnl/(Math.abs(p.sz)*p.entry):0)+'</td>'
+      +'<td class="'+cls(-p.fSince)+'">'+sgn(-p.fSince)+'</td>'
+      +'<td class="'+cls(apr)+'">'+pct(apr,1)+'</td>'
+      +'<td class="dim">'+venueFunding(p)+'</td>'
+      +'<td class="dim">'+(p.liq>0?usd(p.liq,p.liq<1?5:2)+' ('+(dist>0?'+':'')+(dist*100).toFixed(0)+'%)':'—')+'</td>'
+      +'<td>'+(r?cell(r.pxCap):'<span class="dim">—</span>')+'</td>'
+      +'<td>'+(r?cell(r.pxPM):'<span class="dim">—</span>')+'</td>'
+      +'<td>'+(p.lev?p.lev+'×':'—')+'</td></tr>';});
+  if(!list.length&&ACCF) h=h.replace('<tr><td colspan="'+NC+'" class="dim">',hdr(accOf(ACCF))+'<tr><td colspan="'+NC+'" class="dim">');
+  $('perpT').innerHTML=h;
+  syncFilterUI();
+
+  let nt='';
+  if(any){
+    D.perps.filter(p=>p.dex==='core'&&p.sz<0&&p.acc==='main').map(p=>upside(p.base)).filter(r=>r&&r.Z>0).forEach(r=>{
+      nt+='<b>'+r.coin+'</b> — short of '+qty(r.Z,2)+' against '+qty(r.S,2)+' posted as collateral, a hedge ratio of <b>'
+        +(r.ratio*100).toFixed(1)+'%</b>. ';
+      nt+=isFinite(r.first)
+        ? 'First binding constraint at <b>'+usd(r.first,2)+'</b> ('+pct(r.headroom,0)+').<br>'
+        : 'Inside both limits: <b class="pos">no rally can liquidate this position</b>.<br>';});
+    nt+='<br><b>Exchange liq. price</b> — Hyperliquid\'s own figure, computed on the perpetual account in isolation. '
+      +'It ignores spot collateral entirely and is therefore materially conservative for a hedged book.<br>'
+      +'<b>Borrow-capacity breach</b> — the price at which the short\'s mark-to-market loss requires more USDC than the LTV permits to be borrowed '
+      +'against posted collateral. Ordinarily the first constraint to bind.<br>'
+      +'<b>Portfolio-margin liquidation</b> — the price at which the portfolio margin ratio exceeds 0.95, the documented trigger. '
+      +'Computed on the 0.5 + 0.5 × LTV threshold with collateral marked to the same price.<br><br>'
+      +'<b>Other venues</b> shows the next predicted funding on Binance and Bybit, annualised and signed for your side — '
+      +'a materially cheaper venue is a reason to move the leg.<br><br>'
+      +'<span class="dim">Both prices hold other positions at their current mark and exclude future funding; positive funding accrual pushes the '
+      +'constraints further out. HIP-3 venues are separate margin accounts and are excluded.</span>';
   }
-  $('heldTbl2').innerHTML=v; $('heldTbl2').hidden=!v;
+  $('perpN').innerHTML=nt;
 }
 
-/* ---------------- charts ---------------- */
-const W=920,ML=76,MR=18,MT=16,MB=30;
-let GV=null,GP=null;
-function nice(lo,hi){const r=hi-lo||1,s=Math.pow(10,Math.floor(Math.log10(r/4)));
-  const st=[1,2,2.5,5,10].map(m=>m*s).find(v=>r/v<=6)||s*10;
-  return {lo:Math.floor(lo/st)*st,hi:Math.ceil(hi/st)*st,st};}
-function ax(x,t0,t1,H){let o='';const sp=t1-t0;
-  for(let i=0;i<=6;i++){const t=t0+sp*i/6;
-    o+='<text x="'+x(t).toFixed(1)+'" y="'+(H-MB+19)+'" text-anchor="middle" class="ax">'+(sp>2*864e5?dat(t):hhmm(t))+'</text>';}
-  return o;}
-function frame(H,N,y,x,t0,t1,zero){
-  let g='',l='';
-  for(let v=N.lo;v<=N.hi+1e-9;v+=N.st){const yy=y(v).toFixed(1),z=zero&&Math.abs(v)<1e-9;
-    g+='<line x1="'+ML+'" x2="'+(W-MR)+'" y1="'+yy+'" y2="'+yy+'" stroke="'+(z?'var(--line2)':'var(--line)')+'" stroke-width="'+(z?1.6:1)+'"/>';
-    l+='<text x="'+(ML-11)+'" y="'+(+yy+4)+'" text-anchor="end" class="ax">'+(v<0?'−':'')+'$'+nf(Math.abs(v),N.st<10?2:0)+'</text>';}
-  return g+l+ax(x,t0,t1,H)+'<line x1="'+ML+'" x2="'+(W-MR)+'" y1="'+(H-MB)+'" y2="'+(H-MB)+'" stroke="var(--line2)" stroke-width="1.5"/>';}
-const DEF='<defs><linearGradient id="ga" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--accent)" stop-opacity=".22"/><stop offset="100%" stop-color="var(--accent)" stop-opacity=".02"/></linearGradient><style>.ax{font-family:var(--mono);font-size:11px;fill:var(--ink3)}</style></defs>';
-
-function pairSeries(a,b){/* align b onto a's timestamps */
-  if(!b||!b.length)return a.map(p=>[p[0],p[1],null]);
-  let j=0;return a.map(p=>{while(j+1<b.length&&b[j+1][0]<=p[0])j++;return [p[0],p[1],b[j][1]];});}
-
-function drawV(){
-  const H=260,A=D.P[wV],B=D.P[({day:'perpDay',week:'perpWeek',month:'perpMonth',allTime:'perpAllTime'})[wV]];
-  if(!A||!A.av.length)return;
-  const S=pairSeries(A.av,B?B.av:null),t0=S[0][0],t1=S[S.length-1][0];
-  let lo=Infinity,hi=-Infinity;S.forEach(r=>{lo=Math.min(lo,r[1]);hi=Math.max(hi,r[1]);});
-  const N=nice(lo-(hi-lo||1)*.15,hi+(hi-lo||1)*.15);
-  const x=t=>ML+(t-t0)/((t1-t0)||1)*(W-ML-MR), y=v=>MT+(1-(v-N.lo)/((N.hi-N.lo)||1))*(H-MT-MB);
-  GV={S,t0,t1,x,y};
-  const p=k=>S.filter(r=>r[k]!=null).map((r,i)=>(i?'L':'M')+x(r[0]).toFixed(1)+' '+y(r[k]).toFixed(1)).join(' ');
-  const area='M'+x(t0).toFixed(1)+' '+(H-MB)+' '+S.map(r=>'L'+x(r[0]).toFixed(1)+' '+y(r[1]).toFixed(1)).join(' ')+' L'+x(t1).toFixed(1)+' '+(H-MB)+'Z';
-  $('c2').innerHTML=DEF+frame(H,N,y,x,t0,t1,false)+'<path d="'+area+'" fill="url(#ga)"/>'
-   +(B?'<path d="'+p(2)+'" fill="none" stroke="var(--alt)" stroke-width="1.6" opacity=".85"/>':'')
-   +'<path d="'+p(1)+'" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linejoin="round"/>'
-   +'<circle cx="'+x(t1).toFixed(1)+'" cy="'+y(S[S.length-1][1]).toFixed(1)+'" r="4.5" fill="var(--accent)" stroke="var(--surf)" stroke-width="2.5"/>';
-  const ch=S[S.length-1][1]-S[0][1];
-  $('vNote').textContent=usd(S[S.length-1][1],0)+' now · '+sgn(ch,0)+' over '+dur(t1-t0)+' · '+S.length+' points';
+function renderDelta(){
+  const map={}, touch=k=>map[k]||(map[k]={s:0,p:0,px:0});
+  D.spot.filter(inFilter).forEach(b=>{if(D.STABLE(b.coin))return;const m=touch(b.coin);m.s+=b.qty;if(b.px>0)m.px=b.px;});
+  if(D.stkQ>0&&(!ACCF||ACCF==='main')){const m=touch('HYPE');m.s+=D.stkQ;if(!(m.px>0))m.px=D.hypePx;}
+  D.perps.filter(inFilter).forEach(p=>{const m=touch(p.base);m.p+=p.sz;if(!(m.px>0))m.px=p.mark;});
+  const rows=Object.keys(map).map(k=>{const m=map[k],net=m.s+m.p;return{k:k,s:m.s,p:m.p,net:net,px:m.px,val:net*m.px};})
+    .filter(r=>Math.abs(r.val)>=10||Math.abs(r.p)>0).sort((a,b)=>Math.abs(b.val)-Math.abs(a.val));
+  if(!rows.length){$('deltaCard').classList.add('hide');return;}
+  $('deltaCard').classList.remove('hide');
+  let h='<tr><th>Asset</th><th>Spot</th><th>Perpetual</th><th>Net delta</th><th>Price</th><th>Exposure</th><th>Hedge ratio</th></tr>';
+  rows.forEach(r=>{
+    const cov=r.s>0?Math.min(1,Math.abs(Math.min(0,r.p))/r.s):0;
+    h+='<tr><td><b>'+r.k+'</b></td><td>'+qty(r.s,4)+'</td><td class="'+cls(-r.p)+'">'+qty(r.p,4)+'</td>'
+      +'<td class="'+cls(r.net)+'"><b>'+qty(r.net,4)+'</b></td><td>'+usd(r.px,r.px<1?6:2)+'</td>'
+      +'<td class="'+cls(r.val)+'">'+sgn(r.val)+'</td>'
+      +'<td>'+(r.s>0&&r.p<0?(cov*100).toFixed(1)+'%':'<span class="dim">—</span>')+'</td></tr>';});
+  $('deltaT').innerHTML=h;
+  const tot=rows.reduce((a,r)=>a+r.val,0);
+  $('deltaN').innerHTML='Aggregate directional exposure'+(ACCF?' — '+accOf(ACCF).name:' across all accounts')
+    +': <b class="'+cls(tot)+'">'+sgn(tot)+'</b>. '
+    +'Net delta is spot quantity (staking included) plus perpetual size, a short carrying a negative sign. '
+    +'At zero the book is delta-neutral: price ceases to affect equity and only funding accrues.';
 }
-function drawP(){
-  const H=300,A=D.P[wP],B=D.P[({day:'perpDay',week:'perpWeek',month:'perpMonth',allTime:'perpAllTime'})[wP]];
-  if(!A||!A.pnl.length)return;
-  const S=pairSeries(A.pnl,B?B.pnl:null),t0=S[0][0],t1=S[S.length-1][0];
-  let lo=0,hi=0;S.forEach(r=>{lo=Math.min(lo,r[1],r[2]==null?0:r[2]);hi=Math.max(hi,r[1],r[2]==null?0:r[2]);});
-  const pad=(hi-lo||1)*.15,N=nice(lo-pad,hi+pad);
-  const x=t=>ML+(t-t0)/((t1-t0)||1)*(W-ML-MR), y=v=>MT+(1-(v-N.lo)/((N.hi-N.lo)||1))*(H-MT-MB);
-  GP={S,t0,t1,x,y};
-  const p=k=>S.filter(r=>r[k]!=null).map((r,i)=>(i?'L':'M')+x(r[0]).toFixed(1)+' '+y(r[k]).toFixed(1)).join(' ');
-  const area='M'+x(t0).toFixed(1)+' '+y(0).toFixed(1)+' '+S.map(r=>'L'+x(r[0]).toFixed(1)+' '+y(r[1]).toFixed(1)).join(' ')+' L'+x(t1).toFixed(1)+' '+y(0).toFixed(1)+'Z';
-  const fin=S[S.length-1][1];
-  $('c1').innerHTML=DEF+frame(H,N,y,x,t0,t1,true)+'<path d="'+area+'" fill="url(#ga)"/>'
-   +(B?'<path d="'+p(2)+'" fill="none" stroke="var(--alt)" stroke-width="1.6" opacity=".85"/>':'')
-   +'<path d="'+p(1)+'" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linejoin="round"/>'
-   +'<circle cx="'+x(t1).toFixed(1)+'" cy="'+y(fin).toFixed(1)+'" r="4.5" fill="var(--accent)" stroke="var(--surf)" stroke-width="2.5"/>';
-  $('cNote').textContent=sgn(fin,0)+' over '+dur(t1-t0)+' · rebased to zero at the start of the window';
-}
-function hook(boxId,svgId,tipId,g,fmt){
-  const box=$(boxId),tip=$(tipId);
-  box.addEventListener('mousemove',ev=>{const G=g();if(!G)return;
-    const rc=$(svgId).getBoundingClientRect(),xx=(ev.clientX-rc.left)/rc.width*W;
-    const t=G.t0+(xx-ML)/(W-ML-MR)*(G.t1-G.t0);
-    if(t<G.t0||t>G.t1){tip.style.opacity=0;return;}
-    let k=0,best=Infinity;G.S.forEach((r,i)=>{const d=Math.abs(r[0]-t);if(d<best){best=d;k=i;}});
-    tip.style.opacity=1;tip.innerHTML=fmt(G.S[k]);
-    const bx=box.getBoundingClientRect();let lx=ev.clientX-bx.left+16;
-    if(lx+210>bx.width)lx=ev.clientX-bx.left-210;
-    tip.style.left=lx+'px';tip.style.top=Math.max(6,ev.clientY-bx.top-64)+'px';});
-  box.addEventListener('mouseleave',()=>tip.style.opacity=0);
-}
-hook('box2','c2','tip2',()=>GV,r=>'<b>'+stamp(r[0]).slice(0,16)+'</b>account '+usd(r[1],2)+(r[2]!=null?'<br>perp '+usd(r[2],2):''));
-hook('box1','c1','tip1',()=>GP,r=>'<b>'+stamp(r[0]).slice(0,16)+'</b>account <span class="'+cls(r[1])+'">'+sgn(r[1],2)+'</span>'+(r[2]!=null?'<br>perps <span class="'+cls(r[2])+'">'+sgn(r[2],2)+'</span>':''));
 
-/* ---------------- wiring ---------------- */
-function seg(id,set){$(id).addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
-  [...$(id).children].forEach(c=>c.classList.toggle('on',c===b)); set(b.dataset.w);});}
-seg('segV',w=>{wV=w;drawV();});
-seg('segP',w=>{wP=w;drawP();});
+function renderDebt(){
+  const rows=[], add=(k,v,c)=>rows.push('<div class="row"><span class="k">'+k+'</span><span class="v '+(c||'')+'">'+v+'</span></div>');
+  const rate=D.RES['USDC']?n(D.RES['USDC'].borrowYearlyRate):0;
+  add('Outstanding borrow (USDC)',usd(D.borrowed),D.borrowed>0?'neg':'dim');
+  add('Borrow rate',(rate*100).toFixed(2)+'% p.a.');
+  add('Interest cost',usd(D.borrowed*rate)+' p.a.&nbsp;&nbsp;·&nbsp;&nbsp;'+usd(D.borrowed*rate/12)+' per month');
+  add('Collateral credit',usd(D.credit));
+  add('Liquidation value',usd(D.LV));
+  add('Perpetual equity — core book',usd(D.av));
+  add('Perpetual equity — HIP-3 venues',usd(D.avDex));
+  add('&nbsp;&nbsp;of which posted collateral',usd((D.hasPf?D.eqPerp:D.av+D.avDex)-D.mUpnl));
+  add('&nbsp;&nbsp;of which unrealised P&L',sgn(D.mUpnl),cls(D.mUpnl));
+  add('Gross notional <span class="dim">(memo — excluded from equity)</span>',usd(D.mNtl,0),'dim');
+  add('Maintenance margin',usd(D.mm));
+  if(D.aam!=null) add('Available after maintenance',usd(D.aam));
+  add('Health factor',(D.borrowed>0&&D.hf!=null)?D.hf.toFixed(3):'∞',
+      (D.borrowed>0&&D.hf!=null)?(D.hf>=2?'pos':D.hf>=1.3?'warn':'neg'):'dim');
+  $('debtR').innerHTML=rows.join('');
+  const f=D.hf==null?1:Math.max(0,Math.min(1,(D.hf-1)/3));
+  const bar=$('hfBar'); bar.style.width=(f*100).toFixed(0)+'%';
+  bar.style.background=D.borrowed<=0?'var(--pos)':(D.hf>=2?'var(--pos)':D.hf>=1.3?'var(--warn)':'var(--neg)');
+  $('debtN').innerHTML='<b>Equity is what the account owns, not what it controls.</b> Perpetual equity is posted collateral plus unrealised P&amp;L; '
+    +'the gross notional of the positions ('+usd(D.mNtl,0)+') is leverage and is <b>never</b> added to equity. '
+    +'Closing every position at the current mark would leave exactly the equity shown.<br><br>'
+    +'Collateral credit = Σ (quantity supplied × oracle price × threshold), the threshold being 1 for stablecoins and '
+    +'0.5 + 0.5 × LTV otherwise (HYPE: LTV 0.65 → 0.825). '
+    +'Health factor = LTV-weighted collateral ÷ outstanding borrow; below 1.00 the loan is liquidated.';
+}
+
+function renderRepay(){
+  const cands=D.spot.filter(b=>b.acc==='main'&&!D.STABLE(b.coin)&&b.val>1);
+  if(!cands.length||D.borrowed<=0){$('repayCard').classList.add('hide');return;}
+  $('repayCard').classList.remove('hide');
+  const sel=$('repaySel');
+  if(sel.dataset.k!==D.addr){
+    sel.innerHTML=cands.map(b=>'<option value="'+b.coin+'">'+b.coin+' — '+usd(b.val)+'</option>').join('');
+    sel.dataset.k=D.addr;}
+  calcRepay();
+}
+function calcRepay(){
+  const coin=$('repaySel').value, share=parseFloat($('repayPct').value)||1;
+  const b=D.spot.find(x=>x.coin===coin&&x.acc==='main'); if(!b) return;
+  const need=Math.min(b.qty,(D.borrowed*share)/b.px), proceeds=need*b.px;
+  const rateSpot=D.fees?n(D.fees.userSpotCrossRate):0.0007;
+  const fee=proceeds*rateSpot, th=0.5+0.5*b.ltv;
+  const creditLost=Math.min(need,b.sup)*(b.oracle||b.px)*th;
+  const rate=D.RES['USDC']?n(D.RES['USDC'].borrowYearlyRate):0;
+  const lvDelta=proceeds-creditLost;
+  const pp=D.perps.filter(p=>p.base===coin&&p.acc==='main').reduce((a,p)=>a+p.sz,0);
+  const before=b.qty+pp+(coin==='HYPE'?D.stkQ:0), after=before-need;
+  $('repayBig').innerHTML='Sell <b>'+qty(need,4)+' '+coin+'</b> ≈ '+usd(proceeds)
+    +' <span class="dim" style="font-size:14px;font-weight:400">→ borrow '+usd(D.borrowed)+' ⟶ '+usd(Math.max(0,D.borrowed-proceeds))+'</span>';
+  const rows=[], add=(k,v,c)=>rows.push('<div class="row"><span class="k">'+k+'</span><span class="v '+(c||'')+'">'+v+'</span></div>');
+  add('Execution cost at your taker rate ('+(rateSpot*1e4).toFixed(1)+' bps)','−'+usd(fee),'neg');
+  add('Interest saved',usd(proceeds*rate)+' p.a.','pos');
+  add('Collateral credit forgone','−'+usd(creditLost),'neg');
+  add('Borrow retired','−'+usd(Math.min(proceeds,D.borrowed)),'pos');
+  add('Net effect on liquidation value',(lvDelta>=0?'+':'−')+usd(Math.abs(lvDelta)),cls(lvDelta));
+  add('Net delta, '+coin,qty(before,4)+'  ⟶  '+qty(after,4));
+  $('repayR').innerHTML=rows.join('');
+  $('repayN').innerHTML=(lvDelta>=0
+    ? 'Debt is carried at par while collateral is credited at only '+(th*100).toFixed(1)+'%. Repayment therefore <b>improves</b> margin by '+usd(lvDelta)+'.'
+    : 'Here repayment forgoes more credit than it retires in debt: margin deteriorates by '+usd(-lvDelta)+'.')
+    +' The trade-off is a reduction in long exposure of '+qty(need,4)+' '+coin+'.'
+    +(D.fees?' Execution is costed at your actual spot taker rate of '+(rateSpot*1e4).toFixed(1)+' bps, read from <span class="mono">userFees</span>.':'');
+}
+
+function renderMisc(){
+  const rows=[], add=(k,v,c)=>rows.push('<div class="row"><span class="k">'+k+'</span><span class="v '+(c||'')+'">'+v+'</span></div>');
+  if(D.stk){
+    add('HYPE delegated',qty(n(D.stk.delegated),4)+' HYPE — '+usd(n(D.stk.delegated)*D.hypePx));
+    add('HYPE undelegated',qty(n(D.stk.undelegated),4)+' HYPE — '+usd(n(D.stk.undelegated)*D.hypePx));
+    add('Withdrawals pending',qty(n(D.stk.totalPendingWithdrawal),4)+' HYPE — '+usd(n(D.stk.totalPendingWithdrawal)*D.hypePx)+' ('+(D.stk.nPendingWithdrawals||0)+')');
+    add('Staking account total',usd(D.stkV),D.stkV>0?'':'dim');}
+  add('Vaults',usd(D.vltV)+(D.vlt.length?' ('+D.vlt.length+')':''));
+  add('Free perpetual margin',usd(Math.max(0,D.av-D.mm)));
+  if(D.cumLedger!=null){
+    const roi=D.cumLedger>0?(D.eqTotal-D.cumLedger)/D.cumLedger:0;
+    add('Net capital deposited',usd(D.cumLedger));
+    add('Lifetime P&L on deposits',sgn(D.eqTotal-D.cumLedger)+' <span class="dim">('+pct(roi,1)+')</span>',cls(D.eqTotal-D.cumLedger));
+  }
+  if(D.fees){
+    add('Your fee rates — perp',(n(D.fees.userCrossRate)*1e4).toFixed(1)+' bps taker · '+(n(D.fees.userAddRate)*1e4).toFixed(1)+' bps maker');
+    add('Your fee rates — spot',(n(D.fees.userSpotCrossRate)*1e4).toFixed(1)+' bps taker · '+(n(D.fees.userSpotAddRate)*1e4).toFixed(1)+' bps maker');
+    const rd=n(D.fees.activeReferralDiscount), sd=n((D.fees.activeStakingDiscount||{}).discount);
+    if(rd>0||sd>0) add('Active discounts',(rd>0?'referral '+(rd*100).toFixed(0)+'%':'')+(rd>0&&sd>0?' · ':'')+(sd>0?'staking '+(sd*100).toFixed(0)+'%':''),'pos');
+  }
+  if(D.agents&&D.agents.length){
+    D.agents.forEach(a=>{
+      const exp=+a.validUntil, days=Math.ceil((exp-Date.now())/86400000);
+      add('API agent — '+(a.name||'unnamed'),
+        '<span class="mono">'+String(a.address).slice(0,8)+'…'+String(a.address).slice(-4)+'</span> · '
+        +(days>0?'valid '+days+' more day'+(days>1?'s':''):'expired'), days>0?'warn':'dim');
+    });
+  }
+  add('Portfolio margin',D.pmFlag?'<span class="pos">enabled</span>':'<span class="dim">disabled</span>');
+  rows.push('<div class="row"><span class="k">Note</span><span class="v dim" style="font-weight:400;text-align:right;max-width:62%">'
+    +'Staked HYPE is not portfolio-margin collateral. '
+    +(D.agents&&D.agents.length?'An <b>API agent</b> is a delegated key that can place and cancel orders on this account — revoke any you do not recognise. ':'')
+    +'Net capital deposited comes from <span class="mono">webData2.cumLedger</span>: total equity less that figure is lifetime P&amp;L.'
+    +'</span></div>');
+  $('miscR').innerHTML=rows.join('');
+}
+
+/* ---------- events ---------- */
 async function go(){
-  const M=$('loadMsg');M.className='loadmsg';M.textContent='reading the account…';
   const a=$('ADDR').value.trim();
-  if(!isAddr(a)){M.className='loadmsg err';M.textContent='that is not a 0x… address of 40 hex characters';return;}
-  try{D=await build(a);isLive=true;remember(a);$('ADDR').value=a;
-    const u=new URL(location.href);u.searchParams.set('addr',a);
-    try{history.replaceState(null,'',u);}catch(e){}
-    render();
-    M.className='loadmsg ok';M.textContent=D.perps.length+' perp · '+D.rows.length+' spot lines · '+D.nFills+' fills replayed';}
-  catch(e){M.className='loadmsg err';
-    M.innerHTML='Could not read the account. '+(D?'What you see is the snapshot taken at the time above. ':'')
-      +'A hosted copy of this page cannot call the API at all; a downloaded one can, unless the address is wrong or the network is blocked. '
-      +'<span style="opacity:.65">('+e.message+')</span>';}
+  if(!isAddr(a)){say('Invalid address — expected 0x followed by 40 hexadecimal characters.','e');return;}
+  $('go').disabled=true; $('go').textContent='Running…';
+  try{ await scan(a); hush(); render(); }
+  catch(e){ say('Failed: '+e.message,'e'); $('out').classList.add('hide'); }
+  finally{ $('go').disabled=false; $('go').textContent='Run'; }
 }
-window.__GO__=go; window.__D__=()=>D;
-$('ADDR').value=startAddr; fillRecents();
-$('clearAddr').addEventListener('click',()=>{try{localStorage.removeItem(LS_A);localStorage.removeItem(LS_R);}catch(e){}
-  fillRecents();$('loadMsg').className='loadmsg';$('loadMsg').textContent='saved addresses cleared';});
-$('load').addEventListener('click',go);
+$('go').onclick=go;
 $('ADDR').addEventListener('keydown',e=>{if(e.key==='Enter')go();});
-render();
-if(startAddr) setTimeout(go,150);
-})();
+$('clr').onclick=()=>{$('ADDR').value='';$('out').classList.add('hide');hush();D=null;$('ADDR').focus();};
+document.querySelectorAll('h2.tog').forEach(t=>{t.onclick=()=>t.parentNode.classList.toggle('shut');});
+const allCards=()=>document.querySelectorAll('#out .card');
+$('allOpen').onclick=()=>allCards().forEach(c=>c.classList.remove('shut'));
+$('allShut').onclick=()=>allCards().forEach(c=>c.classList.add('shut'));
+$('scopeBtn').onclick=()=>{SCOPE=(SCOPE==='all')?'main':'all';renderKpis();renderPerf();};
+$('accClear').onclick=()=>pickAcc(ACCF);
+$('accToggle').onclick=()=>{SHOWEMPTY=!SHOWEMPTY;renderAccounts();};
+$('accSel').onchange=()=>{ACCF=$('accSel').value;renderAccounts();renderSpot();renderPerps();renderDelta();syncFilterUI();};
+$('cM').onchange=()=>{cM=$('cM').value;renderChart();};
+$('cW').onchange=()=>{cW=$('cW').value;renderChart();};
+$('repaySel').onchange=calcRepay; $('repayPct').onchange=calcRepay;
+$('ADDR').value='';   /* opens with no address preloaded */
 </script>
-
-</body>
-</html>
+</body></html>
